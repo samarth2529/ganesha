@@ -1,0 +1,431 @@
+// ===================================================================
+// VIGHNAHARTA — MAIN GAME ENGINE (PERFORMANCE OPTIMIZED)
+// Stable 60 FPS target, single directional light, zero memory leaks.
+// ===================================================================
+
+import * as THREE from 'three';
+import { ShaderMaterials } from '../world/ShaderMaterials.js';
+import { Mushak } from '../entities/Mushak.js';
+import { TrackManager } from '../world/TrackManager.js';
+import { EnvironmentManager } from '../world/EnvironmentManager.js';
+import { CameraController } from './CameraController.js';
+import { InputManager } from './InputManager.js';
+import { AudioManager } from './AudioManager.js';
+import { VFXManager } from '../vfx/VFXManager.js';
+import { UIManager } from '../ui/UIManager.js';
+
+export class Game {
+  constructor() {
+    this.canvas = document.getElementById('webgl-canvas');
+    this.state = 'MENU'; // 'MENU' | 'PLAYING' | 'PAUSED' | 'GAMEOVER' | 'CLIMAX'
+
+    // Timing & Progression
+    this.clock = new THREE.Clock();
+    this.distance = 0;
+    this.baseSpeed = 18.0;
+    this.currentSpeed = this.baseSpeed;
+    this.maxSpeed = 32.0;
+    this.starsCollected = 0;
+    this.combo = 1;
+    this.comboTimer = 0;
+    this.starStreak = 0;
+
+    // Divine Protection & Abilities
+    this.protectionActive = true;
+    this.protectionPercent = 1.0;
+    this.invulnerableTimer = 0;
+
+    // Dynamic Objectives Tracker
+    this.objectives = [
+      { text: 'COLLECT 25 STARS', check: (g) => g.starsCollected >= 25 },
+      { text: 'REACH 500m DISTANCE', check: (g) => g.distance >= 500 },
+      { text: 'ACHIEVE ×5 COMBO', check: (g) => g.combo >= 5 },
+      { text: 'REACH SACRED TEMPLE', check: (g) => g.distance >= 1500 }
+    ];
+    this.currentObjectiveIndex = 0;
+    this.lastStageName = '';
+
+    this.stepTimer = 0;
+
+    this.shaderMaterials = new ShaderMaterials();
+    this.initRenderer();
+    this.initScene();
+    this.initLighting();
+
+    // World & Environment
+    this.environment = new EnvironmentManager(this.scene, this.shaderMaterials);
+
+    // Subsystems
+    this.audio = new AudioManager();
+    this.cameraController = new CameraController(this.camera, this.canvas);
+    this.mushak = new Mushak(this.shaderMaterials);
+    this.scene.add(this.mushak.mesh);
+
+    this.trackManager = new TrackManager(this.scene, this.shaderMaterials);
+    this.vfx = new VFXManager(this.scene, this.shaderMaterials);
+    this.input = new InputManager(this);
+    this.ui = new UIManager(this);
+
+    this.setupResize();
+    this.cameraController.setMenuMode(true);
+    this.animate();
+  }
+
+  initRenderer() {
+    this.renderer = new THREE.WebGLRenderer({
+      canvas: this.canvas,
+      antialias: true,
+      powerPreference: 'high-performance'
+    });
+    this.renderer.setSize(window.innerWidth, window.innerHeight);
+    // Capped at 1.0 for rock-solid 60 FPS performance across all devices
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.0));
+    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.type = THREE.PCFShadowMap;
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1.15;
+    this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+  }
+
+  initScene() {
+    this.scene = new THREE.Scene();
+    this.scene.background = new THREE.Color(0x3d1a08);
+    // Radiant atmospheric golden haze allowing grand temple and horizon visibility
+    this.scene.fog = new THREE.Fog(0x5a2a10, 80, 1600);
+
+    // Optimized near/far ratio to provide 100x depth buffer precision and eliminate Z-fighting
+    this.camera = new THREE.PerspectiveCamera(58, window.innerWidth / window.innerHeight, 0.8, 1600);
+    this.camera.position.set(0, 3.0, -6.0);
+  }
+
+  initLighting() {
+    // 1. Soft Ambient Fill
+    this.ambientLight = new THREE.AmbientLight(0xffeed8, 1.6);
+    this.scene.add(this.ambientLight);
+
+    // 2. The ONE Main Realtime Directional Sunlight (Following runner with tight shadow bounds)
+    this.sunLight = new THREE.DirectionalLight(0xfff6dc, 3.2);
+    this.sunLight.position.set(15, 28, 20);
+    this.sunLight.castShadow = true;
+    this.sunLight.shadow.mapSize.width = 1024;
+    this.sunLight.shadow.mapSize.height = 1024;
+    this.sunLight.shadow.camera.near = 0.5;
+    this.sunLight.shadow.camera.far = 100;
+    this.sunLight.shadow.camera.left = -15;
+    this.sunLight.shadow.camera.right = 15;
+    this.sunLight.shadow.camera.top = 15;
+    this.sunLight.shadow.camera.bottom = -15;
+    this.sunLight.shadow.bias = -0.0008;
+    this.scene.add(this.sunLight);
+  }
+
+  setupResize() {
+    window.addEventListener('resize', () => {
+      this.camera.aspect = window.innerWidth / window.innerHeight;
+      this.camera.updateProjectionMatrix();
+      this.renderer.setSize(window.innerWidth, window.innerHeight);
+      this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.0));
+    });
+  }
+
+  handleInput(action) {
+    if (this.state !== 'PLAYING') return;
+
+    if (action === 'LEFT' || action === 'RIGHT') {
+      const moved = this.mushak.changeLane(action);
+      if (moved) {
+        this.audio.playLaneShift();
+        this.vfx.spawnFootstepDust(this.mushak.mesh.position);
+      }
+    } else if (action === 'JUMP') {
+      const jumped = this.mushak.jump();
+      if (jumped) {
+        this.audio.playJump();
+        this.vfx.spawnFootstepDust(this.mushak.mesh.position);
+      }
+    } else if (action === 'SLIDE') {
+      const slid = this.mushak.slide();
+      if (slid) {
+        this.audio.playSlide();
+        this.vfx.spawnFootstepDust(this.mushak.mesh.position, true);
+      }
+    }
+  }
+
+  startJourney() {
+    this.audio.init();
+    this.audio.resume();
+    this.audio.startRunnerMusic();
+
+    this.state = 'PLAYING';
+    this.distance = 0;
+    this.currentSpeed = this.baseSpeed;
+    this.starsCollected = 0;
+    this.combo = 1;
+    this.comboTimer = 0;
+    this.starStreak = 0;
+    this.protectionActive = true;
+    this.protectionPercent = 1.0;
+    this.invulnerableTimer = 0;
+    this.currentObjectiveIndex = 0;
+    this.lastStageName = '';
+
+    this.mushak.reset();
+    this.trackManager.reset();
+    this.cameraController.reset();
+    this.cameraController.setMenuMode(false);
+    if (this.vfx) {
+      this.vfx.reset();
+    }
+
+    this.ui.showHUD();
+    if (this.objectives[this.currentObjectiveIndex]) {
+      this.ui.updateObjective(this.objectives[this.currentObjectiveIndex].text);
+    }
+  }
+
+  skipToTemple() {
+    this.audio.init();
+    this.audio.resume();
+
+    this.distance = 1475;
+    this.currentSpeed = 0;
+    this.starsCollected = 108;
+
+    this.mushak.reset();
+    this.mushak.mesh.position.set(0, 0, 1475);
+    this.trackManager.heroTemple.loadIfNeeded();
+    if (this.vfx) {
+      this.vfx.reset();
+    }
+
+    this.triggerClimaxArrival();
+  }
+
+  restartJourney() {
+    this.startJourney();
+  }
+
+  togglePause() {
+    if (this.state === 'PLAYING') {
+      this.state = 'PAUSED';
+      this.ui.showPauseScreen(true);
+    } else if (this.state === 'PAUSED') {
+      this.state = 'PLAYING';
+      this.ui.showPauseScreen(false);
+    }
+  }
+
+  triggerClimaxArrival() {
+    this.state = 'CLIMAX_CINEMATIC';
+    this.trackManager.heroTemple.loadIfNeeded();
+    this.mushak.triggerVictory();
+    this.audio.transitionToTempleClimax();
+    this.cameraController.startCinematicReveal(new THREE.Vector3(0, 0, 1500));
+    this.ui.show360HUD();
+    if (this.vfx) {
+      this.vfx.setSnowIntensity(0.0);
+    }
+  }
+
+  triggerCollision() {
+    this.state = 'GAMEOVER';
+    this.mushak.triggerDeath();
+    this.audio.playImpact();
+    this.audio.stopMusic();
+    this.ui.triggerFlash('hit');
+    this.ui.showGameOver(this.distance, this.starsCollected);
+    if (this.vfx) {
+      this.vfx.setSnowIntensity(0.0);
+    }
+  }
+
+  animate() {
+    requestAnimationFrame(() => this.animate());
+
+    const rawDelta = this.clock.getDelta();
+    const delta = Math.min(rawDelta, 0.05);
+
+    if (this.state === 'PLAYING') {
+      let speedRatio = 1.0 + Math.min(0.8, this.distance / 1200);
+      
+      if (this.distance > 1350) {
+        const approachProgress = Math.min(1.0, (this.distance - 1350) / 150);
+        speedRatio = THREE.MathUtils.lerp(speedRatio, 0.4, approachProgress);
+      }
+
+      this.currentSpeed = this.baseSpeed * speedRatio;
+      this.audio.setSpeedFactor(speedRatio);
+
+      const moveZ = this.currentSpeed * delta;
+      this.distance += moveZ;
+      this.mushak.mesh.position.z += moveZ;
+
+      // Invulnerability tick
+      if (this.invulnerableTimer > 0) {
+        this.invulnerableTimer -= delta;
+      }
+
+      // Update Sun Light to follow player
+      this.sunLight.position.z = this.mushak.mesh.position.z + 20;
+      this.sunLight.target.position.z = this.mushak.mesh.position.z;
+      this.sunLight.target.updateMatrixWorld();
+
+      // Update Mushak
+      this.mushak.update(delta, this.currentSpeed);
+
+      // Footstep dust
+      if (this.mushak.isGrounded && !this.mushak.isSliding) {
+        this.stepTimer += delta * (this.currentSpeed * 0.4);
+        if (this.stepTimer > 1.0) {
+          this.stepTimer = 0;
+          this.vfx.spawnFootstepDust(this.mushak.mesh.position);
+        }
+      }
+
+      // Update Track & Dynamic Stage Environment
+      this.trackManager.update(this.mushak.mesh.position.z, delta);
+      const stage = this.trackManager.getCurrentStage(this.distance);
+
+      // Stage Transition Atmospheric Warning (1s subtle banner)
+      if (this.lastStageName !== '' && this.lastStageName !== stage.name) {
+        this.ui.triggerVighnaWarning(`ENTERING ${stage.name}`);
+      }
+      this.lastStageName = stage.name;
+
+      // Smooth Fog & Light Color Transition
+      if (this.scene.fog) {
+        this.scene.fog.color.lerp(new THREE.Color(stage.fogColor), 0.05);
+      }
+      if (this.sunLight) {
+        this.sunLight.color.lerp(new THREE.Color(stage.lightColor), 0.05);
+      }
+
+      // Snow intensity strictly in Himalayan Snow Passage (750m - 1200m)
+      let targetSnow = 0.0;
+      if (this.distance >= 750 && this.distance <= 1200) {
+        targetSnow = 1.0;
+      } else if (this.distance > 700 && this.distance < 750) {
+        targetSnow = (this.distance - 700) / 50.0;
+      } else if (this.distance > 1200 && this.distance < 1250) {
+        targetSnow = 1.0 - (this.distance - 1200) / 50.0;
+      }
+      if (this.vfx) {
+        this.vfx.setSnowIntensity(targetSnow);
+      }
+
+      if (this.environment) {
+        if (stage.name === 'HIMALAYAN SNOW PASSAGE') {
+          this.environment.updateSkyColors(0x1a2844, 0x486c8c, 0x82a8c8, 0xe2f2ff);
+        } else if (stage.name === 'DEODAR FOOTHILLS') {
+          this.environment.updateSkyColors(0x221c38, 0x7c4e3a, 0xb87850, 0xffd0a0);
+        } else {
+          this.environment.updateSkyColors(0x240a42, 0xd64c0e, 0xff8c18, 0xffbf40);
+        }
+      }
+
+      // Collision, Near-Misses & Pickups
+      if (this.distance < 1450) {
+        const collisionResult = this.trackManager.checkCollisions(this.mushak);
+
+        // Near-Miss Dodging Event
+        if (collisionResult.nearMiss) {
+          this.ui.triggerNearMiss();
+          this.combo++;
+          this.comboTimer = 2.5;
+          this.audio.playLaneShift();
+        }
+
+        // Star Pickups
+        if (collisionResult.collected.length > 0) {
+          collisionResult.collected.forEach(col => {
+            this.starsCollected++;
+            this.combo++;
+            this.comboTimer = 2.5;
+            this.starStreak++;
+
+            this.audio.playStarPickup(this.combo);
+            this.vfx.createStarBurst(col.position);
+            this.ui.triggerFlash('gold');
+            this.ui.triggerStarPickup(1);
+
+            // Streak formation reward
+            if (this.starStreak > 0 && this.starStreak % 6 === 0) {
+              this.ui.triggerFormation('DIVINE FORMATION');
+            }
+          });
+        }
+
+        // Obstacle Collision Handling with Protection Shield
+        if (collisionResult.hit) {
+          if (this.invulnerableTimer > 0) {
+            // Currently invulnerable from recent shield break
+          } else if (this.protectionActive) {
+            // Shield absorbs damage!
+            this.protectionActive = false;
+            this.invulnerableTimer = 1.5;
+            this.ui.triggerFlash('gold');
+            this.audio.playStarPickup(5);
+            this.ui.triggerVighnaWarning('SHIELD ABSORBED IMPACT');
+          } else {
+            this.triggerCollision();
+          }
+        }
+      }
+
+      // Combo timer countdown
+      if (this.comboTimer > 0) {
+        this.comboTimer -= delta;
+        if (this.comboTimer <= 0) {
+          this.combo = 1;
+          this.starStreak = 0;
+        }
+      }
+
+      // Dynamic Objective Checking
+      const currentObj = this.objectives[this.currentObjectiveIndex];
+      if (currentObj && currentObj.check(this)) {
+        this.ui.updateObjective(`✓ ${currentObj.text}`, true);
+        this.currentObjectiveIndex++;
+        setTimeout(() => {
+          const nextObj = this.objectives[this.currentObjectiveIndex];
+          if (nextObj) {
+            this.ui.updateObjective(nextObj.text, false);
+          }
+        }, 2200);
+      }
+
+      // Climax Arrival
+      if (this.distance >= 1500) {
+        this.triggerClimaxArrival();
+      }
+
+      // Update Minimal Running HUD
+      this.ui.updateHUD(
+        this.distance,
+        this.starsCollected,
+        stage.name,
+        speedRatio,
+        this.combo,
+        this.protectionActive,
+        this.protectionPercent
+      );
+    } else if (this.state === 'CLIMAX_CINEMATIC' || this.state === 'CLIMAX_360') {
+      this.mushak.update(delta, 0.3);
+      this.trackManager.update(this.mushak.mesh.position.z, delta);
+    } else if (this.state === 'GAMEOVER') {
+      this.mushak.update(delta, 0);
+    }
+
+    // Camera & VFX & Environment
+    const speedRatio = this.currentSpeed / this.baseSpeed;
+    this.cameraController.update(this.mushak, this.currentSpeed, speedRatio, delta);
+    this.vfx.update(delta, this.mushak.mesh.position, this.currentSpeed);
+    if (this.environment) {
+      this.environment.update(this.mushak.mesh.position.z, delta);
+    }
+
+    // Render Scene (clean, direct, 60 FPS)
+    this.renderer.render(this.scene, this.camera);
+  }
+}

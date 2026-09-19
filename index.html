@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>VIGHNAHARTA | 4D Cinematic Indian Mythological Endless Runner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/src/styles/main.css" />
+</head>
+<body>
+  <!-- WebGL Canvas Container -->
+  <div id="game-container">
+    <canvas id="webgl-canvas"></canvas>
+  </div>
+
+  <!-- Cinematic Post-Process / Vignette Overlay -->
+  <div id="cinematic-overlay"></div>
+
+  <!-- Cinematic Title / Main Menu Screen -->
+  <div id="start-screen" class="screen active">
+    <div class="menu-vignette"></div>
+
+    <!-- Center Hero Identity -->
+    <div class="menu-hero">
+      <div class="menu-crest">
+        <span class="crest-line"></span>
+        <span class="crest-symbol">ॐ</span>
+        <span class="crest-line"></span>
+      </div>
+
+      <h1 class="menu-title">VIGHNAHARTA</h1>
+      <p class="menu-subtitle">A DIVINE JOURNEY OF MUSHAK</p>
+
+      <div class="menu-actions">
+        <button id="btn-start" class="btn-play-hero" aria-label="Begin Journey">
+          <span class="btn-hero-border"></span>
+          <span class="btn-hero-shine"></span>
+          <span class="btn-hero-text">BEGIN JOURNEY</span>
+        </button>
+
+        <button id="btn-skip-start" class="btn-action-secondary" title="Visit Sacred Temple & Sanctum">
+          <span>TEMPLE</span>
+          <span class="arrow-glyph">→</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Bottom HUD-Style Corner Details -->
+    <div class="menu-bottom-bar">
+      <!-- Bottom Left: Compact Controls Popover Toggle -->
+      <div class="menu-corner-left">
+        <button id="btn-menu-controls" class="corner-btn" title="View Controls Guide">
+          <span class="corner-icon">⌨</span>
+          <span class="corner-label">CONTROLS</span>
+        </button>
+        <div id="menu-controls-popover" class="controls-popover">
+          <div class="popover-header">SACRED CONTROLS</div>
+          <div class="popover-row"><span><kbd>A</kbd> <kbd>D</kbd> or <kbd>←</kbd> <kbd>→</kbd></span><span>MOVE</span></div>
+          <div class="popover-row"><span><kbd>SPACE</kbd> / <kbd>W</kbd></span><span>JUMP</span></div>
+          <div class="popover-row"><span><kbd>S</kbd> / <kbd>↓</kbd></span><span>SLIDE</span></div>
+        </div>
+      </div>
+
+      <!-- Bottom Center: Subtle Branding -->
+      <div class="menu-corner-center">
+        <span>© VIGHNAHARTA · 4D CINEMATIC</span>
+      </div>
+
+      <!-- Bottom Right: Audio Toggle -->
+      <div class="menu-corner-right">
+        <button id="btn-menu-audio" class="corner-btn corner-icon-only" title="Toggle Sound">
+          <span id="menu-audio-icon">🔊</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Minimal Cinematic In-Game Running HUD -->
+  <div id="game-hud" class="screen hud-hidden">
+    <!-- Top HUD Bar -->
+    <div class="hud-top-bar">
+      <!-- Top Left: Divine Protection & Blessing -->
+      <div class="hud-top-left">
+        <div id="hud-protection-badge" class="hud-protection-badge" title="Divine Protection Shield">
+          <div class="protection-ring-bg">
+            <svg class="protection-svg" viewBox="0 0 36 36">
+              <circle class="protection-circle-bg" cx="18" cy="18" r="15.5"></circle>
+              <circle id="hud-protection-ring" class="protection-circle-fill" cx="18" cy="18" r="15.5"></circle>
+            </svg>
+            <span class="protection-icon">🔱</span>
+          </div>
+          <span class="protection-label">PROTECTION</span>
+        </div>
+      </div>
+
+      <!-- Top Center: Run Distance & Journey Identity -->
+      <div class="hud-top-center">
+        <div class="hud-distance-wrap">
+          <span id="hud-distance" class="hud-distance-val">0</span>
+          <span class="hud-distance-unit">m</span>
+        </div>
+        <div class="hud-journey-label">JOURNEY</div>
+
+        <!-- Temple Approach Hairline Progression (Visible in final stretch) -->
+        <div id="hud-temple-approach" class="hud-temple-approach">
+          <div class="approach-track">
+            <div id="hud-approach-fill" class="approach-fill"></div>
+          </div>
+          <span class="approach-text">TEMPLE APPROACH</span>
+        </div>
+      </div>
+
+      <!-- Top Right: Star Counter, Floating Feedback & Minimal Pause -->
+      <div class="hud-top-right">
+        <!-- Minimal Star Counter -->
+        <div class="hud-stars-wrap">
+          <span class="hud-star-glyph">★</span>
+          <span id="hud-stars" class="hud-stars-val">0</span>
+          <div id="hud-star-popups" class="hud-star-popups"></div>
+        </div>
+
+        <!-- Minimalist Pause Button -->
+        <button id="btn-pause" class="hud-pause-btn" title="Pause Journey">Ⅱ</button>
+      </div>
+    </div>
+
+    <!-- Upper-Center Floating Dynamic Notifications -->
+    <div class="hud-floating-notifications">
+      <!-- Divine Combo Indicator (Only visible during active combo) -->
+      <div id="hud-combo-badge" class="hud-combo-badge">
+        <div id="hud-combo-multiplier" class="combo-number">×2</div>
+        <div class="combo-sub">DIVINE COMBO</div>
+      </div>
+
+      <!-- Near Miss Feedback -->
+      <div id="hud-near-miss-badge" class="hud-near-miss-badge">
+        <span class="near-miss-text">NEAR MISS</span>
+      </div>
+
+      <!-- Divine Star Formation Streak Feedback -->
+      <div id="hud-formation-badge" class="hud-formation-badge">
+        <span class="formation-icon">✦</span>
+        <span class="formation-text">DIVINE FORMATION</span>
+      </div>
+
+      <!-- Cinematic Vighna / Sacred Trial Warning -->
+      <div id="hud-vighna-warning" class="hud-vighna-warning">
+        <span class="vighna-icon">⚡</span>
+        <span id="hud-vighna-text" class="vighna-text">SACRED TRIAL AHEAD</span>
+      </div>
+    </div>
+
+    <!-- Subtle Mission / Objective Indicator -->
+    <div id="hud-objective-pill" class="hud-objective-pill">
+      <span class="obj-marker">◈</span>
+      <span id="hud-objective-text" class="obj-text">COLLECT 25 STARS</span>
+    </div>
+
+    <!-- Bottom-Center: Minimal First-Run Tutorial Prompt (Fades away automatically) -->
+    <div id="hud-tutorial-guide" class="hud-tutorial-guide">
+      <span class="tut-segment"><kbd>A</kbd> / <kbd>D</kbd> MOVE</span>
+      <span class="tut-dot">·</span>
+      <span class="tut-segment"><kbd>SPACE</kbd> JUMP</span>
+      <span class="tut-dot">·</span>
+      <span class="tut-segment"><kbd>S</kbd> SLIDE</span>
+    </div>
+
+    <!-- Dynamic Speed Vignette Effect Container -->
+    <div id="speed-lines-container"></div>
+    
+    <!-- Screen Flash Effect (Hit / Divine Aura) -->
+    <div id="screen-flash"></div>
+  </div>
+
+  <!-- Pause Overlay -->
+  <div id="pause-screen" class="screen overlay-hidden">
+    <div class="pause-card">
+      <h2>JOURNEY PAUSED</h2>
+      <p>Mushak rests for a moment...</p>
+      <div class="pause-buttons">
+        <button id="btn-resume" class="btn-divine-secondary">RESUME</button>
+        <button id="btn-restart-pause" class="btn-divine-secondary">RESTART</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Over Screen (Collision) -->
+  <div id="gameover-screen" class="screen overlay-hidden">
+    <div class="gameover-card">
+      <div class="om-glow">ॐ</div>
+      <h2>JOURNEY INTERRUPTED</h2>
+      <p>Mushak stumbled along the sacred path.</p>
+      <div class="stats-summary">
+        <div class="stat-box">
+          <span class="stat-label">DISTANCE REACHED</span>
+          <span class="stat-val" id="stat-dist">0m</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">DIVINE STARS COLLECTED</span>
+          <span class="stat-val" id="stat-stars">0</span>
+        </div>
+      </div>
+      <button id="btn-tryagain" class="btn-divine-play">
+        <span class="btn-glow"></span>
+        <span class="btn-text">RUN AGAIN</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 360° Temple Photo Mode HUD -->
+  <div id="temple-360-hud" class="screen">
+    <div class="temple-360-bottombar">
+      <button id="btn-replay-360" class="btn-divine-play">
+        <span class="btn-glow"></span>
+        <span class="btn-text">🔄 RUN AGAIN</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Climax Temple Cinematic Ending Screen -->
+  <div id="cinematic-ending-screen" class="screen">
+    <div class="cinematic-backdrop"></div>
+    <div class="cinematic-content">
+      <div class="divine-symbol">॥ श्री गणेशाय नमः ॥</div>
+      <h1 class="ending-title">VIGHNAHARTA</h1>
+      <p class="ending-subtitle">THE REMOVER OF ALL OBSTACLES</p>
+      
+      <div class="blessing-message">
+        "May Lord Ganesha bestow divine wisdom, peace, prosperity, and joy upon your life."
+      </div>
+
+      <div class="final-stats-banner">
+        <div class="final-stat">
+          <span class="fs-num" id="end-stat-dist">1,800m</span>
+          <span class="fs-lbl">SACRED PATH CROSSED</span>
+        </div>
+        <div class="final-stat-divider"></div>
+        <div class="final-stat">
+          <span class="fs-num" id="end-stat-stars">0</span>
+          <span class="fs-lbl">DIVINE STARS OFFERED</span>
+        </div>
+        <div class="final-stat-divider"></div>
+        <div class="final-stat">
+          <span class="fs-num" id="end-stat-score">0</span>
+          <span class="fs-lbl">DEVOTION SCORE</span>
+        </div>
+      </div>
+
+      <div class="cinematic-actions">
+        <button id="btn-replay-journey" class="btn-divine-play">
+          <span class="btn-glow"></span>
+          <span class="btn-text">SEEK BLESSINGS AGAIN</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
