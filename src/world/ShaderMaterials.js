@@ -57,6 +57,15 @@ export class ShaderMaterials {
 
     // 13. Dvarapala Guardian Deity Niche Relief Texture
     this.textures.dvarapalaAlbedo = this.createDvarapalaReliefTexture(512);
+
+    // 14. Ancient Hoysala / Dravidian Sculpted Pillar Texture & Normal
+    this.textures.mandapaPillarAlbedo = this.createAncientPillarTexture(512);
+
+    // 15. Ancient Pillared Corridor Mandapa Back Wall Relief Texture
+    this.textures.mandapaWallAlbedo = this.createAncientMandapaWallTexture(512);
+
+    // 16. Stepped Stone Ceiling Slab Texture
+    this.textures.mandapaCeilingAlbedo = this.createMandapaCeilingTexture(512);
   }
 
   createParticleDotTexture(size = 128) {
@@ -697,6 +706,251 @@ export class ShaderMaterials {
     return tex;
   }
 
+  // Authentic Ancient Lathe-Turned & Sculpted Temple Pillar (Stambha) Texture
+  createAncientPillarTexture(size = 512) {
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+
+    // Warm weathered ancient granite/sandstone base
+    const baseGrad = ctx.createLinearGradient(0, 0, 0, size);
+    baseGrad.addColorStop(0, '#5a3d24');
+    baseGrad.addColorStop(0.3, '#8e653e');
+    baseGrad.addColorStop(0.7, '#6e4a2a');
+    baseGrad.addColorStop(1, '#4e331b');
+    ctx.fillStyle = baseGrad;
+    ctx.fillRect(0, 0, size, size);
+
+    // Stone grain noise
+    for (let i = 0; i < 4000; i++) {
+      const nx = Math.random() * size;
+      const ny = Math.random() * size;
+      ctx.fillStyle = Math.random() > 0.5 ? 'rgba(255, 230, 180, 0.12)' : 'rgba(20, 10, 5, 0.15)';
+      ctx.fillRect(nx, ny, 2, 2);
+    }
+
+    // Carved Lathe-Turned Annular Rings & Mouldings
+    const ringYPositions = [32, 70, 120, 175, 230, 290, 360, 420, 475];
+    ringYPositions.forEach((y, idx) => {
+      // Shaded groove under ring
+      ctx.fillStyle = '#221105';
+      ctx.fillRect(0, y, size, 8);
+
+      // Highlighted convex bead ring
+      const ringGrad = ctx.createLinearGradient(0, y - 12, 0, y);
+      ringGrad.addColorStop(0, '#422510');
+      ringGrad.addColorStop(0.5, '#deb07a');
+      ringGrad.addColorStop(1, '#663914');
+      ctx.fillStyle = ringGrad;
+      ctx.fillRect(0, y - 12, size, 12);
+
+      // Lotus petal / Bead chain carving on alternating rings
+      if (idx % 2 === 0) {
+        ctx.fillStyle = '#fedda2';
+        for (let bx = 10; bx < size; bx += 20) {
+          ctx.beginPath();
+          ctx.arc(bx, y - 6, 4.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    });
+
+    // Vertical fluting channels along pillar mid-shaft
+    ctx.strokeStyle = 'rgba(25, 12, 5, 0.35)';
+    ctx.lineWidth = 3;
+    for (let fx = 16; fx < size; fx += 28) {
+      ctx.beginPath();
+      ctx.moveTo(fx, 130);
+      ctx.lineTo(fx, 280);
+      ctx.stroke();
+
+      // Golden highlight on rib edge
+      ctx.strokeStyle = 'rgba(255, 220, 150, 0.25)';
+      ctx.beginPath();
+      ctx.moveTo(fx + 2, 130);
+      ctx.lineTo(fx + 2, 280);
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(25, 12, 5, 0.35)';
+    }
+
+    // Carved miniature shrine devatas on lower shaft
+    for (let nx = 32; nx < size; nx += 128) {
+      // Miniature niche arch
+      ctx.strokeStyle = '#ffd885';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(nx + 32, 440, 20, Math.PI, 0);
+      ctx.lineTo(nx + 52, 490);
+      ctx.lineTo(nx + 12, 490);
+      ctx.closePath();
+      ctx.stroke();
+
+      // Deep niche shadow
+      ctx.fillStyle = 'rgba(20, 8, 2, 0.6)';
+      ctx.fill();
+
+      // Deity silhouette
+      ctx.fillStyle = '#e8b878';
+      ctx.beginPath();
+      ctx.arc(nx + 32, 450, 7, 0, Math.PI * 2); // head
+      ctx.fill();
+      ctx.fillRect(nx + 28, 458, 8, 22); // body
+    }
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    return tex;
+  }
+
+  // Ancient Mandapa Colonnade Back Wall Texture
+  createAncientMandapaWallTexture(size = 512) {
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+
+    // Ancient Granite Ashlar Blocks
+    ctx.fillStyle = '#61442d';
+    ctx.fillRect(0, 0, size, size);
+
+    // Stone block courses
+    ctx.strokeStyle = '#28170c';
+    ctx.lineWidth = 3;
+    const rowH = 48;
+    for (let y = 0; y < size; y += rowH) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(size, y);
+      ctx.stroke();
+
+      const offset = (y / rowH) % 2 === 0 ? 0 : 36;
+      for (let x = offset; x < size; x += 72) {
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x, y + rowH);
+        ctx.stroke();
+      }
+    }
+
+    // Recessed Devakoshtha Niche Shrines
+    for (let nx = 64; nx < size; nx += 160) {
+      // Shaded Niche Pocket
+      ctx.fillStyle = '#1c0e05';
+      ctx.fillRect(nx - 40, 100, 80, 220);
+
+      // Carved Pilasters on Niche Flanks
+      ctx.fillStyle = '#b07f4e';
+      ctx.fillRect(nx - 46, 90, 10, 240);
+      ctx.fillRect(nx + 36, 90, 10, 240);
+
+      // Torana Arch Pediment over niche
+      ctx.strokeStyle = '#ffd885';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(nx, 100, 44, Math.PI, 0);
+      ctx.stroke();
+
+      // Sculpted Dancing Deity Silhouette
+      ctx.fillStyle = '#f0be7c';
+      ctx.beginPath();
+      ctx.arc(nx, 150, 12, 0, Math.PI * 2); // Head
+      ctx.fill();
+      ctx.fillRect(nx - 8, 164, 16, 40); // Torso
+      ctx.fillRect(nx - 14, 204, 10, 50); // Left Leg
+      ctx.fillRect(nx + 4, 204, 10, 50);  // Right Leg
+
+      // Four Divine Arms
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#f0be7c';
+      ctx.beginPath();
+      ctx.moveTo(nx - 8, 172);
+      ctx.lineTo(nx - 28, 150);
+      ctx.moveTo(nx + 8, 172);
+      ctx.lineTo(nx + 28, 150);
+      ctx.moveTo(nx - 8, 180);
+      ctx.lineTo(nx - 26, 195);
+      ctx.moveTo(nx + 8, 180);
+      ctx.lineTo(nx + 26, 195);
+      ctx.stroke();
+    }
+
+    // Base Plinth Frieze: Elephant & Lion Procession
+    ctx.fillStyle = '#422812';
+    ctx.fillRect(0, size - 70, size, 70);
+    ctx.strokeStyle = '#deb07a';
+    ctx.lineWidth = 2;
+    for (let ex = 20; ex < size; ex += 60) {
+      ctx.fillStyle = '#d99e5b';
+      ctx.beginPath();
+      ctx.arc(ex + 14, size - 45, 14, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillRect(ex + 2, size - 40, 24, 20); // body
+      ctx.fillRect(ex + 20, size - 35, 6, 26); // trunk
+      ctx.fillRect(ex + 4, size - 20, 6, 16);  // legs
+      ctx.fillRect(ex + 18, size - 20, 6, 16);
+    }
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(1, 1);
+    return tex;
+  }
+
+  // Stepped Stone Slab Coffered Ceiling Texture
+  createMandapaCeilingTexture(size = 512) {
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+
+    // Ancient Soot-Aged Temple Stone
+    ctx.fillStyle = '#4a3424';
+    ctx.fillRect(0, 0, size, size);
+
+    // Coffered Ceiling Grid
+    const grid = 128;
+    for (let cy = 0; cy < size; cy += grid) {
+      for (let cx = 0; cx < size; cx += grid) {
+        // Recessed pocket
+        const grad = ctx.createRadialGradient(cx + grid/2, cy + grid/2, 10, cx + grid/2, cy + grid/2, grid/2);
+        grad.addColorStop(0, '#755136');
+        grad.addColorStop(0.8, '#331f10');
+        grad.addColorStop(1, '#201208');
+        ctx.fillStyle = grad;
+        ctx.fillRect(cx + 6, cy + 6, grid - 12, grid - 12);
+
+        // Center Carved Lotus Rosette (Padma-Mandala)
+        const mx = cx + grid / 2;
+        const my = cy + grid / 2;
+        ctx.fillStyle = '#d69e62';
+        for (let p = 0; p < 8; p++) {
+          const angle = (p / 8) * Math.PI * 2;
+          ctx.beginPath();
+          ctx.arc(mx + Math.cos(angle) * 16, my + Math.sin(angle) * 16, 9, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.fillStyle = '#fedba0';
+        ctx.beginPath();
+        ctx.arc(mx, my, 8, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Stone border bevel
+        ctx.strokeStyle = '#deb07a';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(cx + 4, cy + 4, grid - 8, grid - 8);
+      }
+    }
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(2, 2);
+    return tex;
+  }
+
   initCoreMaterials() {
     this.materials.sandstone = new THREE.MeshStandardMaterial({
       color: 0xdeb887,
@@ -705,6 +959,45 @@ export class ShaderMaterials {
       map: this.textures.sandstoneAlbedo,
       normalMap: this.textures.sandstoneNormal,
       normalScale: new THREE.Vector2(0.8, 0.8)
+    });
+
+    // Sculpted Lathe-Turned Ancient Granite/Sandstone Mandapa Pillars
+    this.materials.ancientGranitePillar = new THREE.MeshStandardMaterial({
+      color: 0xcaa078,
+      roughness: 0.65,
+      metalness: 0.18,
+      map: this.textures.mandapaPillarAlbedo,
+      normalMap: this.textures.sandstoneNormal,
+      normalScale: new THREE.Vector2(1.5, 1.5)
+    });
+
+    // Mandapa Colonnade Carved Inner Wall
+    this.materials.mandapaWall = new THREE.MeshStandardMaterial({
+      color: 0xb58c65,
+      roughness: 0.82,
+      metalness: 0.1,
+      map: this.textures.mandapaWallAlbedo,
+      normalMap: this.textures.sandstoneNormal,
+      normalScale: new THREE.Vector2(1.2, 1.2)
+    });
+
+    // Heavy Stone Cross-Lintel Beams & Architraves
+    this.materials.ancientStoneLintel = new THREE.MeshStandardMaterial({
+      color: 0x9e754d,
+      roughness: 0.75,
+      metalness: 0.12,
+      map: this.textures.sandstoneAlbedo,
+      normalMap: this.textures.sandstoneNormal,
+      normalScale: new THREE.Vector2(1.0, 1.0)
+    });
+
+    // Coffered Stone Ceiling Slabs
+    this.materials.mandapaCeiling = new THREE.MeshStandardMaterial({
+      color: 0x825e3c,
+      roughness: 0.85,
+      metalness: 0.08,
+      map: this.textures.mandapaCeilingAlbedo,
+      side: THREE.DoubleSide
     });
 
     this.materials.templeFloor = new THREE.MeshStandardMaterial({

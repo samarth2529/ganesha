@@ -220,43 +220,10 @@ export class TrackManager {
       }
     }
 
-    // Outer Temple Courtyard Plaza (X = ±16.5m to ±32.0m)
-    const plazaWidth = 16.0;
-    const plazaGeo = new THREE.PlaneGeometry(plazaWidth, len);
-    plazaGeo.rotateX(-Math.PI / 2);
-
+    // Authentic Ancient Temple Pillared Mandapa Colonnades along both flanks
     for (let side = -1; side <= 1; side += 2) {
-      const plazaCenterX = side * (16.0 + plazaWidth / 2);
-
-      const plaza = new THREE.Mesh(plazaGeo, this.materials.sandstone);
-      plaza.position.set(plazaCenterX, 0, len / 2);
-      plaza.receiveShadow = true;
-      group.add(plaza);
-
-      for (let bZ = 10.0; bZ < len; bZ += 20.0) {
-        const brazier = this.createBrazierUrn();
-        brazier.position.set(side * 17.5, 0, bZ);
-        group.add(brazier);
-      }
-
-      const tree = this.createBanyanTree();
-      tree.position.set(side * 24.5, 0, 22.0);
-      group.add(tree);
-    }
-
-    // Carved Temple Boundary Walls
-    const wallH = 10.0;
-    const wallGeo = new THREE.BoxGeometry(1.6, wallH, len);
-    for (let side = -1; side <= 1; side += 2) {
-      const wall = new THREE.Mesh(wallGeo, this.materials.templeWall || this.materials.sandstone);
-      wall.position.set(side * 32.5, wallH / 2, len / 2);
-      wall.receiveShadow = true;
-      group.add(wall);
-
-      const corniceGeo = new THREE.BoxGeometry(2.2, 0.5, len);
-      const cornice = new THREE.Mesh(corniceGeo, this.materials.sandstone);
-      cornice.position.set(side * 32.5, wallH + 0.25, len / 2);
-      group.add(cornice);
+      const mandapa = this.createTempleMandapaColonnade(side, len, 'VALLEY');
+      group.add(mandapa);
     }
 
     if (segIndex % 2 === 1) {
@@ -338,27 +305,10 @@ export class TrackManager {
       }
     }
 
-    // Outer Mountain Terraces with Himalayan Deodar Pines
-    const plazaWidth = 16.0;
-    const plazaGeo = new THREE.PlaneGeometry(plazaWidth, len);
-    plazaGeo.rotateX(-Math.PI / 2);
-
+    // Authentic Ancient Temple Pillared Mandapa Colonnades along both flanks
     for (let side = -1; side <= 1; side += 2) {
-      const plazaCenterX = side * (16.0 + plazaWidth / 2);
-      const plaza = new THREE.Mesh(plazaGeo, this.materials.valleyTerrain || this.materials.sandstone);
-      plaza.position.set(plazaCenterX, 0, len / 2);
-      group.add(plaza);
-
-      // Himalayan Deodar Pines
-      const pine = this.createDeodarPineTree(false);
-      pine.position.set(side * 24.0, 0, 20.0);
-      group.add(pine);
-
-      // Mountain Stone Cliff Wall
-      const cliffGeo = new THREE.BoxGeometry(2.0, 12.0, len);
-      const cliff = new THREE.Mesh(cliffGeo, this.materials.cliffStone || this.materials.templeWall);
-      cliff.position.set(side * 32.5, 6.0, len / 2);
-      group.add(cliff);
+      const mandapa = this.createTempleMandapaColonnade(side, len, 'FOOTHILLS');
+      group.add(mandapa);
     }
 
     if (segIndex % 2 === 1) {
@@ -416,7 +366,7 @@ export class TrackManager {
       topRail.position.set(railX, 0.65, len / 2);
       group.add(topRail);
 
-      // Balustrade Posts & Glowing Diya Lamps (Warm Gold contrast against white snow!)
+      // Balustrade Posts & Glowing Diya Lamps
       for (let pZ = 5.0; pZ < len; pZ += 10.0) {
         const post = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.24, 0.85, 6), this.materials.frostedStone || this.materials.sandstone);
         post.position.set(railX, 0.42, pZ);
@@ -469,56 +419,13 @@ export class TrackManager {
       }
     }
 
-    // 4. Outer Pristine Himalayan Snow Blanket Terraces & Snow Deodars
-    const terraceWidth = 16.0;
-    const snowTerraceGeo = new THREE.PlaneGeometry(terraceWidth, len);
-    snowTerraceGeo.rotateX(-Math.PI / 2);
-
+    // 4. Authentic Frosted Ancient Temple Mandapa Colonnades along both flanks
     for (let side = -1; side <= 1; side += 2) {
-      const terraceCenterX = side * (16.0 + terraceWidth / 2);
-
-      const terrace = new THREE.Mesh(snowTerraceGeo, this.materials.himalayanSnow);
-      terrace.position.set(terraceCenterX, 0, len / 2);
-      terrace.receiveShadow = true;
-      group.add(terrace);
-
-      // Sacred Snow Homa Fire Kund / Flaming Urn
-      for (let bZ = 12.0; bZ < len; bZ += 20.0) {
-        const brazier = this.createSnowBrazierUrn();
-        brazier.position.set(side * 17.5, 0, bZ);
-        group.add(brazier);
-      }
-
-      // Snow-Laden Himalayan Deodar Pine Trees
-      const snowPine = this.createDeodarPineTree(true);
-      snowPine.position.set(side * 24.5, 0, 22.0);
-      group.add(snowPine);
+      const mandapa = this.createTempleMandapaColonnade(side, len, 'SNOW');
+      group.add(mandapa);
     }
 
-    // 5. Himalayan Snow Cliff Boundary Walls & Frozen Waterfalls
-    const cliffH = 14.0;
-    const cliffGeo = new THREE.BoxGeometry(2.0, cliffH, len);
-
-    for (let side = -1; side <= 1; side += 2) {
-      const cliff = new THREE.Mesh(cliffGeo, this.materials.cliffStone || this.materials.sandstone);
-      cliff.position.set(side * 32.5, cliffH / 2, len / 2);
-      group.add(cliff);
-
-      // Snow Cap along top of cliff
-      const snowTopGeo = new THREE.BoxGeometry(3.0, 0.6, len);
-      const snowTop = new THREE.Mesh(snowTopGeo, this.materials.himalayanSnow);
-      snowTop.position.set(side * 32.5, cliffH + 0.3, len / 2);
-      group.add(snowTop);
-
-      // Frozen Ice Waterfall cascading down cliff
-      const wfGeo = new THREE.PlaneGeometry(3.5, cliffH - 2);
-      wfGeo.rotateY(side === 1 ? -Math.PI / 2 : Math.PI / 2);
-      const wf = new THREE.Mesh(wfGeo, this.materials.frozenWaterfall || this.materials.frozenIce);
-      wf.position.set(side * 31.4, (cliffH - 2) / 2 + 1.0, len / 2);
-      group.add(wf);
-    }
-
-    // 6. Snow-Dusted Himalayan Torana Gateway Arch
+    // 5. Snow-Dusted Himalayan Torana Gateway Arch
     if (segIndex % 2 === 1) {
       const snowTorana = this.createSnowToranaArch();
       snowTorana.position.set(0, 0, len / 2);
@@ -596,28 +503,10 @@ export class TrackManager {
       }
     }
 
-    // Outer Temple Plaza with Floodlit Gopuram Walls
-    const plazaWidth = 16.0;
-    const plazaGeo = new THREE.PlaneGeometry(plazaWidth, len);
-    plazaGeo.rotateX(-Math.PI / 2);
-
+    // Authentic Royal Dravidian Temple Pillared Mandapa Colonnades along both flanks
     for (let side = -1; side <= 1; side += 2) {
-      const plazaCenterX = side * (16.0 + plazaWidth / 2);
-      const plaza = new THREE.Mesh(plazaGeo, this.materials.sandstone);
-      plaza.position.set(plazaCenterX, 0, len / 2);
-      group.add(plaza);
-
-      for (let bZ = 8.0; bZ < len; bZ += 15.0) {
-        const brazier = this.createBrazierUrn();
-        brazier.position.set(side * 17.5, 0, bZ);
-        group.add(brazier);
-      }
-
-      const wallH = 12.0;
-      const wallGeo = new THREE.BoxGeometry(2.0, wallH, len);
-      const wall = new THREE.Mesh(wallGeo, this.materials.gopuramTier || this.materials.templeWall);
-      wall.position.set(side * 32.5, wallH / 2, len / 2);
-      group.add(wall);
+      const mandapa = this.createTempleMandapaColonnade(side, len, 'TEMPLE_APPROACH');
+      group.add(mandapa);
     }
 
     if (segIndex % 2 === 1) {
@@ -881,6 +770,254 @@ export class TrackManager {
     group.add(crest);
 
     return group;
+  }
+
+  // Helper: Authentic Sculpted Ancient Temple Pillar (Stambha)
+  createOrnateTemplePillar(pillarMat, isSnow = false) {
+    const pillarGroup = new THREE.Group();
+    const stoneMat = pillarMat || this.materials.ancientGranitePillar || this.materials.sandstone;
+    const goldMat = this.materials.divineGold;
+    const brassMat = this.materials.templeBrass;
+
+    // 1. Upana & Jagati (Stepped Square Plinth Base)
+    const base1 = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.4, 1.5), stoneMat);
+    base1.position.y = 0.2;
+    base1.receiveShadow = true;
+    pillarGroup.add(base1);
+
+    const base2 = new THREE.Mesh(new THREE.BoxGeometry(1.25, 0.35, 1.25), stoneMat);
+    base2.position.y = 0.55;
+    base2.receiveShadow = true;
+    pillarGroup.add(base2);
+
+    // Gold trim band on plinth
+    const goldTrim = new THREE.Mesh(new THREE.BoxGeometry(1.28, 0.08, 1.28), goldMat);
+    goldTrim.position.y = 0.74;
+    pillarGroup.add(goldTrim);
+
+    // 2. Lower Carved Drum (Octagonal section with Devata relief niches)
+    const octDrum = new THREE.Mesh(new THREE.CylinderGeometry(0.52, 0.58, 1.8, 8), stoneMat);
+    octDrum.position.y = 1.65;
+    octDrum.receiveShadow = true;
+    pillarGroup.add(octDrum);
+
+    // Miniature Carved Deity Shrine Niches on 4 cardinal faces of lower drum
+    for (let f = 0; f < 4; f++) {
+      const angle = (f * Math.PI) / 2;
+      const nicheFrame = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.6, 0.12), goldMat);
+      nicheFrame.position.set(Math.sin(angle) * 0.54, 1.65, Math.cos(angle) * 0.54);
+      nicheFrame.rotation.y = angle;
+      pillarGroup.add(nicheFrame);
+    }
+
+    // 3. Lathe-Turned Annular Rings / Discs (Kumbha, Padma, Kani)
+    const ring1 = new THREE.Mesh(new THREE.CylinderGeometry(0.68, 0.68, 0.15, 16), stoneMat);
+    ring1.position.y = 2.62;
+    pillarGroup.add(ring1);
+
+    const goldRing = new THREE.Mesh(new THREE.CylinderGeometry(0.64, 0.64, 0.08, 16), brassMat);
+    goldRing.position.y = 2.74;
+    pillarGroup.add(goldRing);
+
+    const ring2 = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 0.14, 16), stoneMat);
+    ring2.position.y = 2.85;
+    pillarGroup.add(ring2);
+
+    // 4. Fluted Cylindrical Mid-Drum Shaft (Stambha Shaft)
+    const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.46, 2.6, 12), stoneMat);
+    shaft.position.y = 4.2;
+    shaft.receiveShadow = true;
+    pillarGroup.add(shaft);
+
+    // Middle ornamental bead ring
+    const midRing = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.12, 12), goldMat);
+    midRing.position.y = 4.2;
+    pillarGroup.add(midRing);
+
+    // 5. Upper Neck & Capital (Kumbha, Phalaka, Abacus)
+    const neckRing = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.44, 0.25, 12), stoneMat);
+    neckRing.position.y = 5.62;
+    pillarGroup.add(neckRing);
+
+    // Flaring bell capital (Padma Capital)
+    const capital = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.5, 0.45, 12), stoneMat);
+    capital.position.y = 5.95;
+    pillarGroup.add(capital);
+
+    // Square Abacus Slab (Phalaka)
+    const abacus = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.25, 1.6), stoneMat);
+    abacus.position.y = 6.3;
+    pillarGroup.add(abacus);
+
+    // 6. Sculpted Cruciform Corbel Brackets (Potika / Yali Brackets)
+    const corbelX = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.35, 0.7), stoneMat);
+    corbelX.position.y = 6.6;
+    pillarGroup.add(corbelX);
+
+    const corbelZ = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.35, 1.8), stoneMat);
+    corbelZ.position.y = 6.6;
+    pillarGroup.add(corbelZ);
+
+    const corbelFinial = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.15, 0.85), goldMat);
+    corbelFinial.position.y = 6.85;
+    pillarGroup.add(corbelFinial);
+
+    // Frosting/Snow Top if in Himalayan biome
+    if (isSnow) {
+      const snowCap = new THREE.Mesh(new THREE.BoxGeometry(1.85, 0.18, 1.85), this.materials.himalayanSnow);
+      snowCap.position.y = 6.95;
+      pillarGroup.add(snowCap);
+    }
+
+    return pillarGroup;
+  }
+
+  // Helper: Authentic Ancient Indian Temple Pillared Mandapa Colonnade
+  createTempleMandapaColonnade(side, len, biome = 'VALLEY') {
+    const colonnadeGroup = new THREE.Group();
+
+    const isSnow = biome === 'SNOW';
+    const isApproach = biome === 'TEMPLE_APPROACH';
+
+    // Select authentic materials based on biome
+    const pillarMat = isSnow ? (this.materials.frostedStone || this.materials.ancientGranitePillar) : this.materials.ancientGranitePillar;
+    const wallMat = isApproach ? (this.materials.gopuramTier || this.materials.mandapaWall) : this.materials.mandapaWall;
+    const lintelMat = isSnow ? (this.materials.frostedStone || this.materials.ancientStoneLintel) : this.materials.ancientStoneLintel;
+    const ceilingMat = this.materials.mandapaCeiling;
+    const floorMat = isSnow ? (this.materials.frostedStone || this.materials.templeFloor) : this.materials.templeFloor;
+
+    const corridorWidth = 18.0;
+    const floorCenterX = side * (16.0 + corridorWidth / 2); // X = side * 25.0m
+
+    // 1. Mandapa Stone Corridor Floor Platform (Paved Gallery)
+    const floorGeo = new THREE.PlaneGeometry(corridorWidth, len);
+    floorGeo.rotateX(-Math.PI / 2);
+    const floor = new THREE.Mesh(floorGeo, floorMat);
+    floor.position.set(floorCenterX, 0.01, len / 2);
+    floor.receiveShadow = true;
+    colonnadeGroup.add(floor);
+
+    // Stepped Adhisthana Plinth Edge along the Canal boundary (X = side * 16.0m)
+    const plinthStepGeo = new THREE.BoxGeometry(0.8, 0.35, len);
+    const plinthStep = new THREE.Mesh(plinthStepGeo, this.materials.adhisthanaBase || pillarMat);
+    plinthStep.position.set(side * 16.0, 0.15, len / 2);
+    plinthStep.receiveShadow = true;
+    colonnadeGroup.add(plinthStep);
+
+    // 2. Double Row of Ornate Sculpted Mandapa Pillars (Stambhavali)
+    const frontRowX = side * 17.5;
+    const rearRowX = side * 25.5;
+
+    const pillarSpacing = 6.0;
+    for (let pZ = 0; pZ <= len; pZ += pillarSpacing) {
+      // Front Row Pillar
+      const frontPillar = this.createOrnateTemplePillar(pillarMat, isSnow);
+      frontPillar.position.set(frontRowX, 0, pZ);
+      colonnadeGroup.add(frontPillar);
+
+      // Rear Row Pillar (Deep multi-layered corridor perspective)
+      const rearPillar = this.createOrnateTemplePillar(pillarMat, isSnow);
+      rearPillar.position.set(rearRowX, 0, pZ);
+      colonnadeGroup.add(rearPillar);
+
+      // Transverse Stone Cross-Lintel Tie-Beam
+      const tieBeamGeo = new THREE.BoxGeometry(16.5, 0.65, 0.85);
+      const tieBeam = new THREE.Mesh(tieBeamGeo, lintelMat);
+      tieBeam.position.set(side * 25.5, 7.05, pZ);
+      tieBeam.receiveShadow = true;
+      colonnadeGroup.add(tieBeam);
+
+      // Hanging Bronze Chain Temple Lamp (Thooku Vilakku) between pillar rows
+      if (Math.round(pZ) % 12 === 0) {
+        const lampMidX = side * 21.5;
+        // Hanging chain
+        const chainGeo = new THREE.CylinderGeometry(0.025, 0.025, 1.8, 4);
+        const chain = new THREE.Mesh(chainGeo, this.materials.templeBrass);
+        chain.position.set(lampMidX, 5.8, pZ);
+        colonnadeGroup.add(chain);
+
+        // Hanging Diya Bowl
+        const lampBowlGeo = new THREE.CylinderGeometry(0.4, 0.15, 0.25, 8);
+        const lampBowl = new THREE.Mesh(lampBowlGeo, this.materials.templeBrass);
+        lampBowl.position.set(lampMidX, 4.8, pZ);
+        colonnadeGroup.add(lampBowl);
+
+        // Radiant Glowing Oil Flame
+        const lampFlameGeo = new THREE.ConeGeometry(0.1, 0.35, 5);
+        const lampFlame = new THREE.Mesh(lampFlameGeo, this.materials.diyaFlame);
+        lampFlame.position.set(lampMidX, 5.05, pZ);
+        colonnadeGroup.add(lampFlame);
+      }
+    }
+
+    // 3. Continuous Longitudinal Stone Architrave Beam Lintels
+    const lintelGeo = new THREE.BoxGeometry(0.9, 0.65, len + 0.5);
+    const frontLintel = new THREE.Mesh(lintelGeo, lintelMat);
+    frontLintel.position.set(frontRowX, 7.05, len / 2);
+    frontLintel.receiveShadow = true;
+    colonnadeGroup.add(frontLintel);
+
+    const rearLintel = new THREE.Mesh(lintelGeo, lintelMat);
+    rearLintel.position.set(rearRowX, 7.05, len / 2);
+    rearLintel.receiveShadow = true;
+    colonnadeGroup.add(rearLintel);
+
+    // 4. Heavy Stone Slab Coffered Ceiling (Mandapa Vitana)
+    const ceilingGeo = new THREE.BoxGeometry(corridorWidth, 0.4, len);
+    const ceiling = new THREE.Mesh(ceilingGeo, ceilingMat);
+    ceiling.position.set(floorCenterX, 7.55, len / 2);
+    ceiling.receiveShadow = true;
+    colonnadeGroup.add(ceiling);
+
+    // 5. Projecting Sloping Stone Chhajja Eaves (Sunshade Cornice over front gallery)
+    const chhajjaGeo = new THREE.BoxGeometry(1.6, 0.25, len);
+    const chhajja = new THREE.Mesh(chhajjaGeo, lintelMat);
+    chhajja.position.set(side * (17.5 - side * 0.9), 7.25, len / 2);
+    chhajja.rotation.z = side * 0.18;
+    colonnadeGroup.add(chhajja);
+
+    // Roof Parapet with Miniature Shikhara / Kudu Frieze
+    const parapetGeo = new THREE.BoxGeometry(0.6, 0.75, len);
+    const parapet = new THREE.Mesh(parapetGeo, pillarMat);
+    parapet.position.set(side * 17.2, 8.1, len / 2);
+    colonnadeGroup.add(parapet);
+
+    // Miniature Shikhara finials along roof edge
+    for (let fz = 3.0; fz < len; fz += 6.0) {
+      const finialGeo = new THREE.ConeGeometry(0.35, 0.7, 6);
+      const finial = new THREE.Mesh(finialGeo, this.materials.divineGold);
+      finial.position.set(side * 17.2, 8.8, fz);
+      colonnadeGroup.add(finial);
+    }
+
+    // 6. Solid Carved Inner Back Sanctorum Wall
+    const wallH = 12.0;
+    const wallGeo = new THREE.BoxGeometry(2.0, wallH, len);
+    const backWall = new THREE.Mesh(wallGeo, wallMat);
+    backWall.position.set(side * 33.5, wallH / 2, len / 2);
+    backWall.receiveShadow = true;
+    colonnadeGroup.add(backWall);
+
+    // Upper Wall Cornice Molding
+    const wallCorniceGeo = new THREE.BoxGeometry(2.4, 0.6, len);
+    const wallCornice = new THREE.Mesh(wallCorniceGeo, lintelMat);
+    wallCornice.position.set(side * 33.5, wallH + 0.3, len / 2);
+    colonnadeGroup.add(wallCornice);
+
+    // Himalayan Snow caps on roof/wall if Snow biome
+    if (isSnow) {
+      const snowRoofGeo = new THREE.BoxGeometry(corridorWidth + 1.0, 0.35, len);
+      const snowRoof = new THREE.Mesh(snowRoofGeo, this.materials.himalayanSnow);
+      snowRoof.position.set(floorCenterX, 7.9, len / 2);
+      colonnadeGroup.add(snowRoof);
+
+      const snowWallGeo = new THREE.BoxGeometry(2.8, 0.4, len);
+      const snowWall = new THREE.Mesh(snowWallGeo, this.materials.himalayanSnow);
+      snowWall.position.set(side * 33.5, wallH + 0.8, len / 2);
+      colonnadeGroup.add(snowWall);
+    }
+
+    return colonnadeGroup;
   }
 
   initTrack(startZ = 0) {
