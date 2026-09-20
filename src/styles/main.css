@@ -1435,3 +1435,305 @@ html, body {
   animation: fadeIn 1s ease-out;
 }
 
+/* ===================================================================
+   RESPONSIVE MOBILE VIEW OPTIMIZATIONS (Max-Width: 768px)
+   Tailored exclusively for mobile portrait and landscape viewports.
+   ================================================================== */
+
+@media (max-width: 768px) {
+  /* Prevent Any Horizontal Overflow */
+  body, html, #game-container, .screen {
+    width: 100vw;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  /* 1. Title / Main Menu Screen */
+  .menu-hero {
+    width: 100%;
+    max-width: 92vw;
+    margin-top: -6vh;
+    padding: 0 12px;
+    gap: 8px;
+    box-sizing: border-box;
+  }
+
+  .menu-crest {
+    gap: 10px;
+    margin-bottom: 0px;
+  }
+
+  .crest-line {
+    width: 22px;
+  }
+
+  .crest-symbol {
+    font-size: 0.95rem;
+  }
+
+  .menu-title {
+    font-size: clamp(1.75rem, 7.8vw, 2.35rem) !important;
+    letter-spacing: 0.10em !important;
+    text-indent: 0.10em !important;
+    line-height: 1.15;
+    white-space: nowrap;
+    text-align: center;
+  }
+
+  .menu-subtitle {
+    font-size: clamp(0.52rem, 2.5vw, 0.68rem) !important;
+    letter-spacing: 0.16em !important;
+    text-indent: 0.16em !important;
+    margin: 0 0 16px 0 !important;
+    white-space: nowrap;
+    text-align: center;
+  }
+
+  .menu-actions {
+    gap: 12px;
+  }
+
+  .btn-play-hero {
+    width: 205px !important;
+    height: 46px !important;
+    border-radius: 6px !important;
+  }
+
+  .btn-hero-text {
+    font-size: 0.92rem !important;
+    letter-spacing: 0.16em !important;
+    text-indent: 0.16em !important;
+  }
+
+  .btn-action-secondary {
+    font-size: 0.68rem !important;
+    letter-spacing: 0.16em !important;
+    text-indent: 0.16em !important;
+    padding: 4px 8px !important;
+  }
+
+  .menu-bottom-bar {
+    padding: 10px 14px max(12px, env(safe-area-inset-bottom, 12px)) !important;
+    gap: 6px;
+  }
+
+  .menu-corner-center {
+    font-size: 0.55rem !important;
+    letter-spacing: 0.12em !important;
+    white-space: nowrap;
+  }
+
+  .corner-btn {
+    padding: 6px 10px !important;
+    font-size: 0.65rem !important;
+    letter-spacing: 0.08em !important;
+  }
+
+  .corner-icon-only {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 0.85rem !important;
+  }
+
+  .controls-popover {
+    width: 200px !important;
+    padding: 10px 12px !important;
+    left: 0 !important;
+    bottom: calc(100% + 8px) !important;
+    font-size: 0.68rem !important;
+  }
+
+  .popover-header {
+    font-size: 0.68rem !important;
+  }
+
+  .popover-row {
+    font-size: 0.68rem !important;
+  }
+
+  /* 2. In-Game Running HUD */
+  #game-hud {
+    padding: 12px 14px !important;
+  }
+
+  .hud-top-bar {
+    align-items: center !important;
+  }
+
+  .hud-protection-badge .protection-ring-bg {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  .hud-protection-badge .protection-svg {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  .protection-icon {
+    font-size: 0.82rem !important;
+  }
+
+  .protection-label {
+    font-size: 0.48rem !important;
+    letter-spacing: 0.08em !important;
+  }
+
+  .hud-distance-wrap .hud-distance-val {
+    font-size: 1.65rem !important;
+  }
+
+  .hud-distance-wrap .hud-distance-unit {
+    font-size: 0.72rem !important;
+  }
+
+  .hud-journey-label {
+    font-size: 0.52rem !important;
+    letter-spacing: 0.18em !important;
+  }
+
+  .hud-stars-wrap {
+    padding: 4px 10px !important;
+    gap: 4px !important;
+    font-size: 0.78rem !important;
+  }
+
+  .hud-pause-btn {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 0.75rem !important;
+  }
+
+  .hud-objective-pill {
+    bottom: 12px !important;
+    padding: 5px 12px !important;
+    font-size: 0.65rem !important;
+    max-width: 88vw !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .hud-vighna-warning {
+    font-size: 0.72rem !important;
+    padding: 6px 14px !important;
+    max-width: 90vw !important;
+  }
+
+  .hud-formation-banner {
+    font-size: 0.75rem !important;
+    padding: 6px 14px !important;
+  }
+
+  .hud-combo-badge .combo-number {
+    font-size: 1.4rem !important;
+  }
+
+  .hud-combo-badge .combo-sub {
+    font-size: 0.55rem !important;
+  }
+
+  /* 3. Pause & Game Over Cards */
+  .pause-card,
+  .gameover-card {
+    width: 90vw !important;
+    max-width: 340px !important;
+    padding: 22px 18px !important;
+    margin: auto !important;
+    box-sizing: border-box !important;
+  }
+
+  .pause-card h2,
+  .gameover-card h2 {
+    font-size: 1.35rem !important;
+    letter-spacing: 0.12em !important;
+  }
+
+  .pause-card p,
+  .gameover-card p {
+    font-size: 0.8rem !important;
+  }
+
+  .stats-summary {
+    gap: 8px !important;
+    margin: 14px 0 !important;
+  }
+
+  .stat-box {
+    padding: 10px !important;
+  }
+
+  .stat-box .stat-label {
+    font-size: 0.55rem !important;
+    letter-spacing: 0.08em !important;
+  }
+
+  .stat-box .stat-val {
+    font-size: 1.15rem !important;
+  }
+
+  .pause-buttons {
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 10px !important;
+  }
+
+  .btn-divine-secondary,
+  .btn-divine-play {
+    width: 100% !important;
+    padding: 12px !important;
+    font-size: 0.88rem !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 4. Climax Cinematic Ending */
+  .cinematic-content {
+    width: 90vw !important;
+    max-width: 350px !important;
+    padding: 20px 14px !important;
+  }
+
+  .divine-symbol {
+    font-size: 0.85rem !important;
+  }
+
+  .ending-title {
+    font-size: 1.8rem !important;
+    letter-spacing: 0.12em !important;
+  }
+
+  .ending-subtitle {
+    font-size: 0.65rem !important;
+    letter-spacing: 0.16em !important;
+  }
+
+  .blessing-message {
+    font-size: 0.78rem !important;
+    line-height: 1.4 !important;
+    margin: 12px 0 !important;
+  }
+
+  .final-stats-banner {
+    flex-direction: column !important;
+    gap: 8px !important;
+    padding: 12px 14px !important;
+  }
+
+  .final-stat-divider {
+    width: 100% !important;
+    height: 1px !important;
+  }
+
+  .final-stat .fs-num {
+    font-size: 1.25rem !important;
+  }
+
+  .final-stat .fs-lbl {
+    font-size: 0.55rem !important;
+  }
+
+  .temple-360-bottombar {
+    margin-bottom: max(16px, env(safe-area-inset-bottom, 16px)) !important;
+  }
+}
+
