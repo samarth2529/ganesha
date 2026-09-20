@@ -220,10 +220,43 @@ export class TrackManager {
       }
     }
 
-    // Authentic Ancient Temple Pillared Mandapa Colonnades along both flanks
+    // Outer Festival Terraces & Plazas (X = ±16.0m to ±32.0m)
+    const plazaWidth = 16.0;
+    const plazaGeo = new THREE.PlaneGeometry(plazaWidth, len);
+    plazaGeo.rotateX(-Math.PI / 2);
+
     for (let side = -1; side <= 1; side += 2) {
-      const mandapa = this.createTempleMandapaColonnade(side, len, 'VALLEY');
-      group.add(mandapa);
+      const plazaCenterX = side * (16.0 + plazaWidth / 2);
+      const plaza = new THREE.Mesh(plazaGeo, this.materials.valleyTerrain || this.materials.sandstone);
+      plaza.position.set(plazaCenterX, 0, len / 2);
+      plaza.receiveShadow = true;
+      group.add(plaza);
+
+      // Sacred Festival Homa Flaming Urns
+      for (let bZ = 8.0; bZ < len; bZ += 15.0) {
+        const brazier = this.createBrazierUrn();
+        brazier.position.set(side * 17.5, 0, bZ);
+        group.add(brazier);
+      }
+
+      // Sacred Banyan & Neem Trees with lush foliage
+      const tree = this.createBanyanTree();
+      tree.position.set(side * 24.0, 0, 20.0);
+      group.add(tree);
+
+      // Carved Sandstone Boundary Wall
+      const wallH = 10.0;
+      const wallGeo = new THREE.BoxGeometry(2.0, wallH, len);
+      const wall = new THREE.Mesh(wallGeo, this.materials.sandstone);
+      wall.position.set(side * 32.5, wallH / 2, len / 2);
+      wall.receiveShadow = true;
+      group.add(wall);
+
+      // Decorative Golden Wall Coping
+      const copingGeo = new THREE.BoxGeometry(2.4, 0.4, len);
+      const coping = new THREE.Mesh(copingGeo, this.materials.divineGold);
+      coping.position.set(side * 32.5, wallH + 0.2, len / 2);
+      group.add(coping);
     }
 
     if (segIndex % 2 === 1) {
@@ -305,10 +338,29 @@ export class TrackManager {
       }
     }
 
-    // Authentic Ancient Temple Pillared Mandapa Colonnades along both flanks
+    // Outer Mountain Terraces with Himalayan Deodar Pines
+    const plazaWidth = 16.0;
+    const plazaGeo = new THREE.PlaneGeometry(plazaWidth, len);
+    plazaGeo.rotateX(-Math.PI / 2);
+
     for (let side = -1; side <= 1; side += 2) {
-      const mandapa = this.createTempleMandapaColonnade(side, len, 'FOOTHILLS');
-      group.add(mandapa);
+      const plazaCenterX = side * (16.0 + plazaWidth / 2);
+      const plaza = new THREE.Mesh(plazaGeo, this.materials.valleyTerrain || this.materials.sandstone);
+      plaza.position.set(plazaCenterX, 0, len / 2);
+      plaza.receiveShadow = true;
+      group.add(plaza);
+
+      // Himalayan Deodar Pines
+      const pine = this.createDeodarPineTree(false);
+      pine.position.set(side * 24.0, 0, 20.0);
+      group.add(pine);
+
+      // Mountain Stone Cliff Wall
+      const cliffGeo = new THREE.BoxGeometry(2.0, 12.0, len);
+      const cliff = new THREE.Mesh(cliffGeo, this.materials.cliffStone || this.materials.sandstone);
+      cliff.position.set(side * 32.5, 6.0, len / 2);
+      cliff.receiveShadow = true;
+      group.add(cliff);
     }
 
     if (segIndex % 2 === 1) {
@@ -419,13 +471,57 @@ export class TrackManager {
       }
     }
 
-    // 4. Authentic Frosted Ancient Temple Mandapa Colonnades along both flanks
+    // 4. Outer Pristine Himalayan Snow Blanket Terraces & Snow Deodars
+    const terraceWidth = 16.0;
+    const snowTerraceGeo = new THREE.PlaneGeometry(terraceWidth, len);
+    snowTerraceGeo.rotateX(-Math.PI / 2);
+
     for (let side = -1; side <= 1; side += 2) {
-      const mandapa = this.createTempleMandapaColonnade(side, len, 'SNOW');
-      group.add(mandapa);
+      const terraceCenterX = side * (16.0 + terraceWidth / 2);
+
+      const terrace = new THREE.Mesh(snowTerraceGeo, this.materials.himalayanSnow);
+      terrace.position.set(terraceCenterX, 0, len / 2);
+      terrace.receiveShadow = true;
+      group.add(terrace);
+
+      // Sacred Snow Homa Fire Kund / Flaming Urn
+      for (let bZ = 12.0; bZ < len; bZ += 20.0) {
+        const brazier = this.createSnowBrazierUrn();
+        brazier.position.set(side * 17.5, 0, bZ);
+        group.add(brazier);
+      }
+
+      // Snow-Laden Himalayan Deodar Pine Trees
+      const snowPine = this.createDeodarPineTree(true);
+      snowPine.position.set(side * 24.5, 0, 22.0);
+      group.add(snowPine);
     }
 
-    // 5. Snow-Dusted Himalayan Torana Gateway Arch
+    // 5. Himalayan Snow Cliff Boundary Walls & Frozen Waterfalls
+    const cliffH = 14.0;
+    const cliffGeo = new THREE.BoxGeometry(2.0, cliffH, len);
+
+    for (let side = -1; side <= 1; side += 2) {
+      const cliff = new THREE.Mesh(cliffGeo, this.materials.cliffStone || this.materials.sandstone);
+      cliff.position.set(side * 32.5, cliffH / 2, len / 2);
+      cliff.receiveShadow = true;
+      group.add(cliff);
+
+      // Snow Cap along top of cliff
+      const snowTopGeo = new THREE.BoxGeometry(3.0, 0.6, len);
+      const snowTop = new THREE.Mesh(snowTopGeo, this.materials.himalayanSnow);
+      snowTop.position.set(side * 32.5, cliffH + 0.3, len / 2);
+      group.add(snowTop);
+
+      // Frozen Ice Waterfall cascading down cliff
+      const wfGeo = new THREE.PlaneGeometry(3.5, cliffH - 2);
+      wfGeo.rotateY(side === 1 ? -Math.PI / 2 : Math.PI / 2);
+      const wf = new THREE.Mesh(wfGeo, this.materials.frozenWaterfall || this.materials.frozenIce);
+      wf.position.set(side * 31.4, (cliffH - 2) / 2 + 1.0, len / 2);
+      group.add(wf);
+    }
+
+    // 6. Snow-Dusted Himalayan Torana Gateway Arch
     if (segIndex % 2 === 1) {
       const snowTorana = this.createSnowToranaArch();
       snowTorana.position.set(0, 0, len / 2);
