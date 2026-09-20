@@ -31,8 +31,6 @@ export class UIManager {
     this.hudFormationBadge = document.getElementById('hud-formation-badge');
     this.hudVighnaWarning = document.getElementById('hud-vighna-warning');
     this.hudVighnaText = document.getElementById('hud-vighna-text');
-    this.hudObjectivePill = document.getElementById('hud-objective-pill');
-    this.hudObjectiveText = document.getElementById('hud-objective-text');
 
     // Screen FX
     this.speedLinesContainer = document.getElementById('speed-lines-container');
@@ -391,16 +389,8 @@ export class UIManager {
     }, 1200);
   }
 
-  // Objective Status
   updateObjective(text, isComplete = false) {
-    if (!this.hudObjectivePill) return;
-    if (this.hudObjectiveText) this.hudObjectiveText.textContent = text;
-    if (isComplete) {
-      this.hudObjectivePill.classList.add('complete');
-      setTimeout(() => {
-        if (this.hudObjectivePill) this.hudObjectivePill.classList.remove('complete');
-      }, 2000);
-    }
+    // Objective pill removed per user request
   }
 
   triggerFlash(type) {

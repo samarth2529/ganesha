@@ -941,42 +941,6 @@ html, body {
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9), 0 0 12px rgba(255, 111, 0, 0.5);
 }
 
-/* ===================================================================
-   SUBTLE OBJECTIVE PILL (UPPER LEFT/CENTER FLOATING)
-   ================================================================== */
-
-.hud-objective-pill {
-  position: absolute;
-  top: 72px;
-  left: 32px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(12, 8, 4, 0.5);
-  border: 1px solid rgba(255, 215, 0, 0.2);
-  padding: 4px 12px;
-  border-radius: 12px;
-  backdrop-filter: blur(4px);
-  opacity: 0.8;
-  transition: opacity 0.3s ease, transform 0.3s ease;
-  pointer-events: none;
-}
-
-.hud-objective-pill.complete {
-  border-color: #2ecc71;
-  background: rgba(10, 30, 15, 0.7);
-  box-shadow: 0 0 14px rgba(46, 204, 113, 0.4);
-  transform: scale(1.05);
-}
-
-.obj-marker {
-  font-size: 0.7rem;
-  color: #ffd700;
-}
-
-.hud-objective-pill.complete .obj-marker {
-  color: #2ecc71;
-}
 
 .obj-text {
   font-family: var(--font-sans);
@@ -1602,16 +1566,6 @@ html, body {
     width: 32px !important;
     height: 32px !important;
     font-size: 0.75rem !important;
-  }
-
-  .hud-objective-pill {
-    bottom: 12px !important;
-    padding: 5px 12px !important;
-    font-size: 0.65rem !important;
-    max-width: 88vw !important;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   .hud-vighna-warning {
