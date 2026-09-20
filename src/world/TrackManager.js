@@ -63,40 +63,18 @@ export class TrackManager {
       this.obstaclePool.push(obs);
     }
 
-    // 2. Fixed Collectible Pools (Stars, Modaks, Diyas)
+    // 2. Fixed Collectible Pools (Stars)
     this.starPool = [];
-    this.modakPool = [];
-    this.diyaPool = [];
     this.activeCollectibles = [];
 
-    // Stars (24 items)
-    for (let i = 0; i < 24; i++) {
+    // Stars (36 items)
+    for (let i = 0; i < 36; i++) {
       const star = this.collectibleFactory.createStar(0, 1.2, 0);
       star.visible = false;
       star.frustumCulled = true;
       star.isCollected = false;
       this.scene.add(star);
       this.starPool.push(star);
-    }
-
-    // Modaks for Region 1 Task (12 items)
-    for (let i = 0; i < 12; i++) {
-      const modak = this.collectibleFactory.createModak(0, 1.1, 0);
-      modak.visible = false;
-      modak.frustumCulled = true;
-      modak.isCollected = false;
-      this.scene.add(modak);
-      this.modakPool.push(modak);
-    }
-
-    // Diyas for Region 2 Task (8 items)
-    for (let i = 0; i < 8; i++) {
-      const diya = this.collectibleFactory.createDiya(0, 0.8, 0);
-      diya.visible = false;
-      diya.frustumCulled = true;
-      diya.isCollected = false;
-      this.scene.add(diya);
-      this.diyaPool.push(diya);
     }
   }
 
@@ -873,8 +851,8 @@ export class TrackManager {
     return group;
   }
 
-  initTrack() {
-    this.spawnZ = 0;
+  initTrack(startZ = 0) {
+    this.spawnZ = startZ;
     for (let i = 0; i < this.visibleSegments; i++) {
       const segMesh = this.createModularSegmentMesh(i, this.spawnZ);
       segMesh.position.z = this.spawnZ;
@@ -888,7 +866,7 @@ export class TrackManager {
       };
       this.segments.push(segData);
 
-      if (i > 0) {
+      if (i > 0 || startZ > 0) {
         this.populateSegment(segData);
       }
 
@@ -912,6 +890,7 @@ export class TrackManager {
         obs.visible = true;
         obs.nearMissChecked = false;
         obs.hasHit = false;
+        obs.trialPassed = false;
         const zOffset = 15 + Math.random() * 12;
         const worldZ = segData.startZ + zOffset;
         obs.position.set(obstacleLane, 0, worldZ);
@@ -923,44 +902,13 @@ export class TrackManager {
       }
     }
 
-    // 2. Region-Specific Interactive Task Items & Offerings
-    if (segData.startZ < 350) {
-      // Region 1: Sacred Modak Offerings
-      const modak = this.modakPool.find(m => !m.visible);
-      if (modak) {
-        modak.visible = true;
-        modak.isCollected = false;
-        const mZ = segData.startZ + 20;
-        modak.position.set(itemLane, 1.1, mZ);
-        modak.worldZ = mZ;
-        modak.segData = segData;
-        if (!this.activeCollectibles.includes(modak)) {
-          this.activeCollectibles.push(modak);
-        }
-      }
-    } else if (segData.startZ < 750) {
-      // Region 2: Sacred Brass Diyas
-      const diya = this.diyaPool.find(d => !d.visible);
-      if (diya) {
-        diya.visible = true;
-        diya.isCollected = false;
-        const dZ = segData.startZ + 22;
-        diya.position.set(itemLane, 0.8, dZ);
-        diya.worldZ = dZ;
-        diya.segData = segData;
-        if (!this.activeCollectibles.includes(diya)) {
-          this.activeCollectibles.push(diya);
-        }
-      }
-    }
-
-    // 3. Sacred Golden Stars (3 in a row along altLane)
+    // 2. Sacred Golden Stars (3 in a row along available lane)
     for (let s = 0; s < 3; s++) {
       const star = this.starPool.find(st => !st.visible);
       if (star) {
         star.visible = true;
         star.isCollected = false;
-        const sZ = segData.startZ + 10 + s * 8.0;
+        const sZ = segData.startZ + 8 + s * 8.0;
         star.position.set(altLane, 1.2, sZ);
         star.worldZ = sZ;
         star.segData = segData;
@@ -1029,14 +977,7 @@ export class TrackManager {
     for (let i = 0; i < this.activeCollectibles.length; i++) {
       const item = this.activeCollectibles[i];
       if (item.visible && !item.isCollected) {
-        if (item.itemType === 'STAR') {
-          item.rotation.y += delta * 2.5;
-        } else if (item.itemType === 'MODAK') {
-          item.rotation.y += delta * 1.8;
-          item.position.y = item.baseY + Math.sin(Date.now() * 0.004) * 0.12;
-        } else if (item.itemType === 'DIYA') {
-          item.rotation.y += delta * 1.2;
-        }
+        item.rotation.y += delta * 2.5;
       }
     }
 
@@ -1111,7 +1052,7 @@ export class TrackManager {
       }
     }
 
-    // 2. Check Collectibles (Stars, Modaks, Diyas)
+    // 2. Check Collectibles (Stars)
     const collected = [];
     for (let i = 0; i < this.activeCollectibles.length; i++) {
       const item = this.activeCollectibles[i];
@@ -1132,17 +1073,17 @@ export class TrackManager {
     return { hit, obstacle: hitObstacle, collected, nearMiss };
   }
 
-  reset() {
-    this.activeObstacles.forEach(obs => {
+  reset(startZ = 0) {
+    this.obstaclePool.forEach(obs => {
       obs.visible = false;
       obs.segData = null;
       obs.nearMissChecked = false;
       obs.hasHit = false;
     });
-    this.activeCollectibles.forEach(item => {
-      item.visible = false;
-      item.segData = null;
-      item.isCollected = false;
+    this.starPool.forEach(st => {
+      st.visible = false;
+      st.segData = null;
+      st.isCollected = false;
     });
     this.activeObstacles = [];
     this.activeCollectibles = [];
@@ -1152,6 +1093,6 @@ export class TrackManager {
       this.scene.remove(seg.mesh);
     }
     this.segments = [];
-    this.initTrack();
+    this.initTrack(startZ);
   }
 }

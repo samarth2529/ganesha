@@ -15,6 +15,7 @@ export class CollectibleFactory {
     const group = new THREE.Group();
     group.position.set(x, y, z);
     group.itemType = 'STAR';
+    group.type = 'STAR';
     group.isCollected = false;
     group.baseY = y;
 
@@ -44,6 +45,7 @@ export class CollectibleFactory {
     const group = new THREE.Group();
     group.position.set(x, y, z);
     group.itemType = 'MODAK';
+    group.type = 'MODAK';
     group.isCollected = false;
     group.baseY = y;
 
@@ -89,6 +91,7 @@ export class CollectibleFactory {
     const group = new THREE.Group();
     group.position.set(x, y, z);
     group.itemType = 'DIYA';
+    group.type = 'DIYA';
     group.isCollected = false;
     group.baseY = y;
 

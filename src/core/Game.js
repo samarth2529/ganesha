@@ -9,7 +9,6 @@ import * as THREE from 'three';
 import { ShaderMaterials } from '../world/ShaderMaterials.js';
 import { Player } from '../entities/Player.js';
 import { MushakGuide } from '../entities/MushakGuide.js';
-import { RegionManager } from '../world/RegionManager.js';
 import { TrackManager } from '../world/TrackManager.js';
 import { EnvironmentManager } from '../world/EnvironmentManager.js';
 import { CameraController } from './CameraController.js';
@@ -62,10 +61,6 @@ export class Game {
     this.mushakGuide = new MushakGuide(this.shaderMaterials);
     this.scene.add(this.mushakGuide.mesh);
 
-    // 3. Multi-Region & Task Progression System
-    this.regionManager = new RegionManager(this);
-    this.setupRegionCallbacks();
-
     this.trackManager = new TrackManager(this.scene, this.shaderMaterials);
     this.vfx = new VFXManager(this.scene, this.shaderMaterials);
     this.input = new InputManager(this);
@@ -74,25 +69,6 @@ export class Game {
     this.setupResize();
     this.cameraController.setMenuMode(true);
     this.animate();
-  }
-
-  setupRegionCallbacks() {
-    this.regionManager.onRegionEnter = (region) => {
-      this.ui.triggerRegionEnter(region);
-      this.audio.playLaneShift();
-    };
-
-    this.regionManager.onTaskProgress = (region) => {
-      this.ui.updateRegionTask(region);
-    };
-
-    this.regionManager.onTaskComplete = (region) => {
-      this.ui.triggerTaskComplete(region);
-      this.audio.playStarPickup(5);
-      if (this.vfx) {
-        this.vfx.createStarBurst(this.player.mesh.position);
-      }
-    };
   }
 
   initRenderer() {
@@ -195,7 +171,6 @@ export class Game {
 
     this.player.reset();
     this.mushakGuide.reset();
-    this.regionManager.reset();
     this.trackManager.reset();
     this.cameraController.reset();
     this.cameraController.setMenuMode(false);
@@ -204,7 +179,6 @@ export class Game {
     }
 
     this.ui.showHUD();
-    this.ui.updateRegionTask(this.regionManager.getCurrentRegion());
   }
 
   skipToTemple() {
@@ -246,7 +220,6 @@ export class Game {
     this.trackManager.heroTemple.loadIfNeeded();
     this.player.triggerVictory();
     this.mushakGuide.triggerVictory();
-    this.regionManager.addProgress('DESTINATION', 1);
 
     this.audio.transitionToTempleClimax();
     this.cameraController.startCinematicReveal(new THREE.Vector3(0, 0, 1500));
@@ -301,9 +274,6 @@ export class Game {
 
       // Update Player Character
       this.player.update(delta, this.currentSpeed);
-
-      // Multi-Region Engine Update
-      this.regionManager.update(this.distance);
 
       // Region 4 (Royal Temple Approach): Spawn & update Mushak Companion Guide
       if (this.distance >= 1200) {
@@ -368,11 +338,9 @@ export class Game {
           this.combo++;
           this.comboTimer = 2.5;
           this.audio.playLaneShift();
-          // Region 3 Trial Progress
-          this.regionManager.addProgress('TRIAL', 1);
         }
 
-        // Collectibles (Stars, Modaks, Diyas)
+        // Collectibles (Stars)
         if (collisionResult && Array.isArray(collisionResult.collected) && collisionResult.collected.length > 0) {
           collisionResult.collected.forEach(col => {
             this.starsCollected++;
@@ -384,11 +352,6 @@ export class Game {
             this.vfx.createStarBurst(col.position);
             this.ui.triggerFlash('gold');
             this.ui.triggerStarPickup(1);
-
-            // Region Task Progress: Route by collectible type (MODAK, DIYA, STAR)
-            if (col.type) {
-              this.regionManager.addProgress(col.type, 1);
-            }
 
             // Streak formation reward: Every 10-star streak grants Divine Shield protection!
             if (this.starStreak > 0 && this.starStreak % 10 === 0) {

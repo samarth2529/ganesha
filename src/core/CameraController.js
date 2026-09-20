@@ -243,14 +243,17 @@ export class CameraController {
     this.camera.lookAt(this.lookTarget);
   }
 
-  reset() {
+  reset(playerZ = 0) {
     this.is360Mode = false;
     this.isCinematicMode = false;
     this.cinematicTime = 0;
     if (this.controls) this.controls.enabled = false;
-    this.currentPos.set(0, 3.8, -7.2);
-    this.camera.position.set(0, 3.8, -7.2);
+    const targetZ = playerZ + this.baseOffset.z;
+    this.currentPos.set(0, 3.8, targetZ);
+    this.camera.position.set(0, 3.8, targetZ);
     this.camera.fov = this.baseFOV;
     this.camera.updateProjectionMatrix();
+    this.lookTarget.set(0, 1.4, playerZ + 16.0);
+    this.camera.lookAt(this.lookTarget);
   }
 }
