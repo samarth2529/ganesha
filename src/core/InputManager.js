@@ -43,12 +43,30 @@ export class InputManager {
   }
 
   setupTouchAndPointer() {
+    let hasSwiped = false;
+
+    // Prevent default context menu on right-click during play
+    const onContextMenu = (e) => {
+      if (this.game.state === 'PLAYING') {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener('contextmenu', onContextMenu);
+    this.listeners.push({ target: window, type: 'contextmenu', handler: onContextMenu });
+
     const onPointerDown = (e) => {
       if (this.game.state !== 'PLAYING') return;
       this.touchStartX = e.clientX;
       this.touchStartY = e.clientY;
       this.touchStartTime = performance.now();
       this.isDragging = true;
+      hasSwiped = false;
+
+      // Handle right-click directly as move RIGHT
+      if (e.button === 2) {
+        this.game.handleInput('RIGHT');
+        hasSwiped = true;
+      }
     };
 
     const onPointerMove = (e) => {
@@ -59,18 +77,23 @@ export class InputManager {
       const absX = Math.abs(deltaX);
       const absY = Math.abs(deltaY);
 
-      // Instant high-sensitivity gesture trigger while dragging
+      // Instant high-sensitivity gesture trigger while dragging/swiping
       if (Math.max(absX, absY) > this.minSwipeDistance) {
+        hasSwiped = true;
         if (absX > absY) {
           if (deltaX > 0) {
+            // Dragged/swiped right -> Move RIGHT
             this.game.handleInput('RIGHT');
           } else {
+            // Dragged/swiped left -> Move LEFT
             this.game.handleInput('LEFT');
           }
         } else {
           if (deltaY < 0) {
+            // Dragged/swiped up -> JUMP
             this.game.handleInput('JUMP');
           } else {
+            // Dragged/swiped down -> SLIDE
             this.game.handleInput('SLIDE');
           }
         }
@@ -82,7 +105,34 @@ export class InputManager {
     };
 
     const onPointerUp = (e) => {
+      if (!this.isDragging || this.game.state !== 'PLAYING') {
+        this.isDragging = false;
+        return;
+      }
       this.isDragging = false;
+
+      // If user directly clicked/tapped without swiping
+      if (!hasSwiped && (performance.now() - this.touchStartTime) < 600) {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        const clickX = e.clientX;
+        const clickY = e.clientY;
+
+        if (clickX < width * 0.42) {
+          // Clicked Left side of screen -> Move LEFT
+          this.game.handleInput('LEFT');
+        } else if (clickX > width * 0.58) {
+          // Clicked Right side of screen -> Move RIGHT
+          this.game.handleInput('RIGHT');
+        } else {
+          // Clicked center zone
+          if (clickY < height * 0.5) {
+            this.game.handleInput('JUMP');
+          } else {
+            this.game.handleInput('SLIDE');
+          }
+        }
+      }
     };
 
     const onPointerCancel = () => {
