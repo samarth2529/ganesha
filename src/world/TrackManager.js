@@ -41,20 +41,24 @@ export class TrackManager {
   }
 
   initPools() {
-    // 1. Fixed Obstacle Pool (15 items)
-    const types = ['LOW', 'HIGH', 'SOLID', 'LOW'];
-    for (let i = 0; i < 15; i++) {
+    // 1. Fixed Obstacle Pool (16 items)
+    const types = ['LOW', 'HIGH', 'SOLID', 'LOW_URLI'];
+    for (let i = 0; i < 16; i++) {
       const type = types[i % types.length];
       let obs;
       if (type === 'LOW') {
         obs = this.obstacleFactory.createLowCart();
       } else if (type === 'HIGH') {
         obs = this.obstacleFactory.createHighStall();
+      } else if (type === 'LOW_URLI') {
+        obs = this.obstacleFactory.createLotusUrli();
       } else {
         obs = this.obstacleFactory.createSolidPillar();
       }
       obs.visible = false;
       obs.frustumCulled = true;
+      obs.nearMissChecked = false;
+      obs.hasHit = false;
       this.scene.add(obs);
       this.obstaclePool.push(obs);
     }
@@ -64,6 +68,7 @@ export class TrackManager {
       const star = this.collectibleFactory.createStar(0, 1.0, 0);
       star.visible = false;
       star.frustumCulled = true;
+      star.isCollected = false;
       this.scene.add(star);
       this.starPool.push(star);
     }
@@ -877,6 +882,8 @@ export class TrackManager {
     const obs = this.obstaclePool.find(o => !o.visible);
     if (obs) {
       obs.visible = true;
+      obs.nearMissChecked = false;
+      obs.hasHit = false;
       const zOffset = 15 + Math.random() * 12;
       const worldZ = segData.startZ + zOffset;
       obs.position.set(obstacleLane, 0, worldZ);
@@ -914,6 +921,8 @@ export class TrackManager {
           if (obs.segData === firstSeg) {
             obs.visible = false;
             obs.segData = null;
+            obs.nearMissChecked = false;
+            obs.hasHit = false;
             return false;
           }
           return true;
@@ -923,6 +932,7 @@ export class TrackManager {
           if (star.segData === firstSeg) {
             star.visible = false;
             star.segData = null;
+            star.isCollected = false;
             return false;
           }
           return true;
@@ -988,33 +998,52 @@ export class TrackManager {
     const pX = player.currentX;
     const pY = player.posY;
 
+    let hit = false;
+    let hitObstacle = null;
     let nearMiss = false;
 
     // Check Obstacles
     for (let i = 0; i < this.activeObstacles.length; i++) {
       const obs = this.activeObstacles[i];
-      if (obs.visible) {
+      if (obs.visible && !obs.hasHit) {
         const dz = Math.abs(obs.worldZ - pZ);
         const dx = Math.abs(obs.position.x - pX);
 
-        if (dz < 1.3) {
-          if (dx < 1.4) {
-            if (obs.actionRequired === 'JUMP') {
-              if (pY < 0.7) return { hit: true, obstacle: obs };
-            } else if (obs.actionRequired === 'SLIDE') {
-              if (!player.isSliding) return { hit: true, obstacle: obs };
-            } else {
-              return { hit: true, obstacle: obs };
+        // Generous, rock-solid collision envelope:
+        // Longitudinal depth window: 1.8m (obs depth ~1.5-2.2m + player depth ~1.2m)
+        // Lateral width window: 1.6m (lane width is 3.2m, player width 1.0m, obstacle width 1.8-2.6m)
+        if (dz < 1.8 && dx < 1.6) {
+          if (obs.actionRequired === 'JUMP') {
+            // Low Cart / Lotus Urli: Must jump over (requires player height > 0.75m)
+            if (pY < 0.75) {
+              hit = true;
+              hitObstacle = obs;
+              obs.hasHit = true;
             }
+          } else if (obs.actionRequired === 'SLIDE') {
+            // High Stall Canopy: Must slide under (standing or jumping hits canopy)
+            if (!player.isSliding) {
+              hit = true;
+              hitObstacle = obs;
+              obs.hasHit = true;
+            }
+          } else {
+            // Solid Pillar / Barrier: Must steer/dodge away (cannot jump or slide through)
+            hit = true;
+            hitObstacle = obs;
+            obs.hasHit = true;
           }
         }
 
-        // Near-Miss detection: Narrowly avoided in adjacent lane or tight jump clearance
-        if (!obs.nearMissChecked && dz < 1.8 && dz > 0.2) {
-          if (dx >= 1.4 && dx <= 2.5) {
+        // Near-Miss detection: Narrowly avoided in adjacent lane or tight jump/slide clearance
+        if (!obs.nearMissChecked && !obs.hasHit && dz < 2.4 && dz > 0.3) {
+          if (dx >= 1.6 && dx <= 2.8) {
             obs.nearMissChecked = true;
             nearMiss = true;
-          } else if (dx < 1.4 && obs.actionRequired === 'JUMP' && pY >= 0.7 && pY <= 1.4) {
+          } else if (dx < 1.6 && obs.actionRequired === 'JUMP' && pY >= 0.75 && pY <= 1.6) {
+            obs.nearMissChecked = true;
+            nearMiss = true;
+          } else if (dx < 1.6 && obs.actionRequired === 'SLIDE' && player.isSliding) {
             obs.nearMissChecked = true;
             nearMiss = true;
           }
@@ -1028,10 +1057,10 @@ export class TrackManager {
       const star = this.activeStars[i];
       if (star.visible && !star.isCollected) {
         const dz = Math.abs(star.worldZ - pZ);
-        if (dz < 1.2) {
+        if (dz < 1.4) {
           const dx = Math.abs(star.position.x - pX);
           const dy = Math.abs(star.position.y - (pY + 0.6));
-          if (dx < 1.2 && dy < 1.5) {
+          if (dx < 1.4 && dy < 1.6) {
             star.isCollected = true;
             star.visible = false;
             collected.push(star);
@@ -1040,12 +1069,21 @@ export class TrackManager {
       }
     }
 
-    return { hit: false, collected: collected, nearMiss: nearMiss };
+    return { hit, obstacle: hitObstacle, collected, nearMiss };
   }
 
   reset() {
-    this.activeObstacles.forEach(obs => { obs.visible = false; obs.segData = null; });
-    this.activeStars.forEach(star => { star.visible = false; star.segData = null; });
+    this.activeObstacles.forEach(obs => {
+      obs.visible = false;
+      obs.segData = null;
+      obs.nearMissChecked = false;
+      obs.hasHit = false;
+    });
+    this.activeStars.forEach(star => {
+      star.visible = false;
+      star.segData = null;
+      star.isCollected = false;
+    });
     this.activeObstacles = [];
     this.activeStars = [];
 

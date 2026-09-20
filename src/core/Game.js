@@ -30,9 +30,9 @@ export class Game {
     this.comboTimer = 0;
     this.starStreak = 0;
 
-    // Divine Protection & Abilities
-    this.protectionActive = true;
-    this.protectionPercent = 1.0;
+    // Divine Protection & Abilities (Earned via high star streaks)
+    this.protectionActive = false;
+    this.protectionPercent = 0.0;
     this.invulnerableTimer = 0;
 
     // Dynamic Objectives Tracker
@@ -164,8 +164,8 @@ export class Game {
     this.combo = 1;
     this.comboTimer = 0;
     this.starStreak = 0;
-    this.protectionActive = true;
-    this.protectionPercent = 1.0;
+    this.protectionActive = false;
+    this.protectionPercent = 0.0;
     this.invulnerableTimer = 0;
     this.currentObjectiveIndex = 0;
     this.lastStageName = '';
@@ -329,7 +329,7 @@ export class Game {
         const collisionResult = this.trackManager.checkCollisions(this.mushak);
 
         // Near-Miss Dodging Event
-        if (collisionResult.nearMiss) {
+        if (collisionResult && collisionResult.nearMiss) {
           this.ui.triggerNearMiss();
           this.combo++;
           this.comboTimer = 2.5;
@@ -337,7 +337,7 @@ export class Game {
         }
 
         // Star Pickups
-        if (collisionResult.collected.length > 0) {
+        if (collisionResult && Array.isArray(collisionResult.collected) && collisionResult.collected.length > 0) {
           collisionResult.collected.forEach(col => {
             this.starsCollected++;
             this.combo++;
@@ -349,24 +349,30 @@ export class Game {
             this.ui.triggerFlash('gold');
             this.ui.triggerStarPickup(1);
 
-            // Streak formation reward
-            if (this.starStreak > 0 && this.starStreak % 6 === 0) {
-              this.ui.triggerFormation('DIVINE FORMATION');
+            // Streak formation reward: Every 10-star streak grants Divine Shield protection!
+            if (this.starStreak > 0 && this.starStreak % 10 === 0) {
+              this.protectionActive = true;
+              this.protectionPercent = 1.0;
+              this.ui.triggerFormation('DIVINE SHIELD GRANTED!');
+              this.ui.triggerFlash('gold');
+            } else if (this.starStreak > 0 && this.starStreak % 5 === 0) {
+              this.ui.triggerFormation('SACRED STREAK');
             }
           });
         }
 
         // Obstacle Collision Handling with Protection Shield
-        if (collisionResult.hit) {
+        if (collisionResult && collisionResult.hit) {
           if (this.invulnerableTimer > 0) {
             // Currently invulnerable from recent shield break
           } else if (this.protectionActive) {
-            // Shield absorbs damage!
+            // Shield absorbs first impact
             this.protectionActive = false;
-            this.invulnerableTimer = 1.5;
-            this.ui.triggerFlash('gold');
-            this.audio.playStarPickup(5);
-            this.ui.triggerVighnaWarning('SHIELD ABSORBED IMPACT');
+            this.protectionPercent = 0.0;
+            this.invulnerableTimer = 1.8;
+            this.ui.triggerFlash('hit');
+            this.audio.playImpact();
+            this.ui.triggerVighnaWarning('DIVINE SHIELD BROKEN!');
           } else {
             this.triggerCollision();
           }

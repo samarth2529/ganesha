@@ -257,11 +257,11 @@ export class Mushak {
     if (this.isDead || this.isVictory) return false;
     if (direction === 'LEFT' && this.currentLane > -1) {
       this.currentLane--;
-      this.targetX = -this.currentLane * this.laneWidth; // Screen Left is +X when looking down +Z
+      this.targetX = this.currentLane * this.laneWidth; // Left is -X (-3.2)
       return true;
     } else if (direction === 'RIGHT' && this.currentLane < 1) {
       this.currentLane++;
-      this.targetX = -this.currentLane * this.laneWidth; // Screen Right is -X when looking down +Z
+      this.targetX = this.currentLane * this.laneWidth; // Right is +X (+3.2)
       return true;
     }
     return false;
