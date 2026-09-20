@@ -33,7 +33,6 @@ export class UIManager {
     this.hudVighnaText = document.getElementById('hud-vighna-text');
     this.hudObjectivePill = document.getElementById('hud-objective-pill');
     this.hudObjectiveText = document.getElementById('hud-objective-text');
-    this.hudTutorialGuide = document.getElementById('hud-tutorial-guide');
 
     // Screen FX
     this.speedLinesContainer = document.getElementById('speed-lines-container');
@@ -248,17 +247,6 @@ export class UIManager {
     this.hideAllScreens();
     this.gameHud.classList.add('active');
     this.lastStars = 0;
-
-    // Tutorial guide fades out smoothly after 4.5 seconds
-    if (this.hudTutorialGuide) {
-      this.hudTutorialGuide.classList.remove('fade-out');
-      if (this.tutorialTimeout) clearTimeout(this.tutorialTimeout);
-      this.tutorialTimeout = setTimeout(() => {
-        if (this.hudTutorialGuide) {
-          this.hudTutorialGuide.classList.add('fade-out');
-        }
-      }, 4500);
-    }
   }
 
   show360HUD() {
