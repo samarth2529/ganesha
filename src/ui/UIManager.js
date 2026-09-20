@@ -24,7 +24,34 @@ export class UIManager {
     this.hudTempleApproach = document.getElementById('hud-temple-approach');
     this.hudApproachFill = document.getElementById('hud-approach-fill');
 
+    // Task Progression Card Elements
+    this.hudTaskCard = document.getElementById('hud-task-card');
+    this.hudTaskBadge = document.getElementById('hud-task-badge');
+    this.hudTaskTypeIcon = document.getElementById('hud-task-type-icon');
+    this.hudTaskTitle = document.getElementById('hud-task-title');
+    this.hudTaskDesc = document.getElementById('hud-task-desc');
+    this.hudTaskBarFill = document.getElementById('hud-task-bar-fill');
+    this.hudTaskProgressVal = document.getElementById('hud-task-progress-val');
+
+    // Vighnas Pips
+    this.vighnaPips = [
+      document.getElementById('vighna-pip-1'),
+      document.getElementById('vighna-pip-2'),
+      document.getElementById('vighna-pip-3')
+    ];
+
+    // Live Run Timer & Score
+    this.hudTimerVal = document.getElementById('hud-timer-val');
+    this.hudScoreVal = document.getElementById('hud-score-val');
+
+    // Contextual [E] Interaction Prompt
+    this.hudInteractPrompt = document.getElementById('hud-interact-prompt');
+    this.hudInteractLabel = document.getElementById('hud-interact-label');
+
     // Dynamic Notifications
+    this.hudTaskCompleteBanner = document.getElementById('hud-task-complete-banner');
+    this.hudTaskCompleteTitle = document.getElementById('hud-task-complete-title');
+    this.hudTaskCompleteReward = document.getElementById('hud-task-complete-reward');
     this.hudComboBadge = document.getElementById('hud-combo-badge');
     this.hudComboMultiplier = document.getElementById('hud-combo-multiplier');
     this.hudNearMissBadge = document.getElementById('hud-near-miss-badge');
@@ -39,9 +66,14 @@ export class UIManager {
     // Stats
     this.statDist = document.getElementById('stat-dist');
     this.statStars = document.getElementById('stat-stars');
-    this.endStatDist = document.getElementById('end-stat-dist');
-    this.endStatStars = document.getElementById('end-stat-stars');
+    this.statTasks = document.getElementById('stat-tasks');
+    this.statScore = document.getElementById('stat-score');
+
     this.endStatScore = document.getElementById('end-stat-score');
+    this.endStatTime = document.getElementById('end-stat-time');
+    this.endStatStars = document.getElementById('end-stat-stars');
+    this.endStatVighnas = document.getElementById('end-stat-vighnas');
+    this.endStatTasks = document.getElementById('end-stat-tasks');
 
     // Buttons
     this.btnStart = document.getElementById('btn-start');
@@ -72,7 +104,7 @@ export class UIManager {
     this.nearMissTimeout = null;
     this.formationTimeout = null;
     this.vighnaTimeout = null;
-    this.tutorialTimeout = null;
+    this.taskCompleteTimeout = null;
 
     this.initEventListeners();
     this.showStartScreen();
@@ -114,6 +146,13 @@ export class UIManager {
         const isMuted = this.game.audio.toggleMute();
         const icon = isMuted ? '🔇' : '🔊';
         if (this.menuAudioIcon) this.menuAudioIcon.textContent = icon;
+      });
+    }
+
+    if (this.hudInteractPrompt) {
+      this.hudInteractPrompt.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.game.handleInput('INTERACT');
       });
     }
 
@@ -244,6 +283,7 @@ export class UIManager {
     this.hideAllScreens();
     this.gameHud.classList.add('active');
     this.lastStars = 0;
+    this.showInteractPrompt(false);
   }
 
   show360HUD() {
@@ -261,19 +301,89 @@ export class UIManager {
     }
   }
 
-  showGameOver(distance, stars) {
+  showGameOver(distance, stars, tasksCompleted = 0, score = 0) {
     this.hideAllScreens();
-    this.statDist.textContent = `${Math.floor(distance).toLocaleString()}m`;
-    this.statStars.textContent = stars;
+    if (this.statDist) this.statDist.textContent = `${Math.floor(distance).toLocaleString()}m`;
+    if (this.statStars) this.statStars.textContent = stars;
+    if (this.statTasks) this.statTasks.textContent = `${tasksCompleted}/10`;
+    if (this.statScore) this.statScore.textContent = score.toLocaleString();
     this.gameoverScreen.classList.add('active');
   }
 
-  showCinematicEnding(distance, stars, score) {
+  showCinematicEnding(results) {
     this.hideAllScreens();
-    this.endStatDist.textContent = `${Math.floor(distance).toLocaleString()}m`;
-    this.endStatStars.textContent = stars;
-    this.endStatScore.textContent = score.toLocaleString();
+    const finalScore = results.score || 0;
+    const finalTime = results.timeFormatted || '00:00';
+    const finalStars = results.stars || 0;
+    const finalVighnas = results.vighnasCleared || 3;
+    const finalTasks = results.tasksCompleted || 10;
+
+    if (this.endStatScore) this.endStatScore.textContent = finalScore.toLocaleString();
+    if (this.endStatTime) this.endStatTime.textContent = finalTime;
+    if (this.endStatStars) this.endStatStars.textContent = finalStars;
+    if (this.endStatVighnas) this.endStatVighnas.textContent = `${finalVighnas}/3`;
+    if (this.endStatTasks) this.endStatTasks.textContent = `${finalTasks}/10`;
+
     this.cinematicEndingScreen.classList.add('active');
+  }
+
+  updateTaskHUD(task, progress, vighnasCleared, score, formattedTime) {
+    // 1. Task Card Details
+    if (task) {
+      if (this.hudTaskBadge) this.hudTaskBadge.textContent = `TASK ${task.num}/10`;
+      if (this.hudTaskTypeIcon) this.hudTaskTypeIcon.textContent = task.icon || '🏛️';
+      if (this.hudTaskTitle) this.hudTaskTitle.textContent = task.title;
+      if (this.hudTaskDesc) this.hudTaskDesc.textContent = task.shortDesc;
+      if (this.hudTaskBarFill) this.hudTaskBarFill.style.width = `${Math.min(100, Math.max(0, progress.progressPercent || 0))}%`;
+      if (this.hudTaskProgressVal) this.hudTaskProgressVal.textContent = progress.text || '';
+    } else {
+      if (this.hudTaskBadge) this.hudTaskBadge.textContent = `COMPLETE`;
+      if (this.hudTaskTitle) this.hudTaskTitle.textContent = 'ALL TASKS COMPLETED';
+      if (this.hudTaskDesc) this.hudTaskDesc.textContent = 'Lord Ganesha is pleased with your pilgrimage!';
+      if (this.hudTaskBarFill) this.hudTaskBarFill.style.width = '100%';
+      if (this.hudTaskProgressVal) this.hudTaskProgressVal.textContent = '10/10';
+    }
+
+    // 2. Vighnas Pips (1 to 3)
+    for (let i = 0; i < 3; i++) {
+      if (this.vighnaPips[i]) {
+        if (i < vighnasCleared) {
+          this.vighnaPips[i].classList.add('active');
+        } else {
+          this.vighnaPips[i].classList.remove('active');
+        }
+      }
+    }
+
+    // 3. Live Score & Run Timer
+    if (this.hudScoreVal) {
+      this.hudScoreVal.textContent = score.toLocaleString();
+    }
+    if (this.hudTimerVal) {
+      this.hudTimerVal.textContent = formattedTime;
+    }
+  }
+
+  showInteractPrompt(show, text = 'CLEAR VIGHNA') {
+    if (!this.hudInteractPrompt) return;
+    if (show) {
+      if (this.hudInteractLabel) this.hudInteractLabel.textContent = text;
+      this.hudInteractPrompt.classList.add('active');
+    } else {
+      this.hudInteractPrompt.classList.remove('active');
+    }
+  }
+
+  triggerTaskComplete(task) {
+    if (!this.hudTaskCompleteBanner) return;
+    if (this.hudTaskCompleteTitle) this.hudTaskCompleteTitle.textContent = task.title;
+    if (this.hudTaskCompleteReward) this.hudTaskCompleteReward.textContent = `+${task.scoreReward || 500} PTS`;
+
+    this.hudTaskCompleteBanner.classList.add('active');
+    if (this.taskCompleteTimeout) clearTimeout(this.taskCompleteTimeout);
+    this.taskCompleteTimeout = setTimeout(() => {
+      if (this.hudTaskCompleteBanner) this.hudTaskCompleteBanner.classList.remove('active');
+    }, 2400);
   }
 
   updateHUD(distance, stars, stageName, speedRatio, combo, protectionActive = false, protectionPercent = 1.0) {
@@ -389,7 +499,7 @@ export class UIManager {
   }
 
   updateObjective(text, isComplete = false) {
-    // Objective pill removed per user request
+    // Objective pill handled by updateTaskHUD
   }
 
   triggerFlash(type) {

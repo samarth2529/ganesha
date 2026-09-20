@@ -21,7 +21,7 @@ export class InputManager {
   setupKeyboard() {
     const onKeyDown = (e) => {
       // Prevent browser default scrolling for game controls
-      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'KeyW', 'KeyA', 'KeyS', 'KeyD'].includes(e.code)) {
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyE'].includes(e.code)) {
         e.preventDefault();
       }
 
@@ -33,6 +33,8 @@ export class InputManager {
         this.game.handleInput('JUMP');
       } else if (e.code === 'KeyS' || e.code === 'ArrowDown') {
         this.game.handleInput('SLIDE');
+      } else if (e.code === 'KeyE') {
+        this.game.handleInput('INTERACT');
       } else if (e.code === 'KeyP' || e.code === 'Escape') {
         this.game.togglePause();
       }

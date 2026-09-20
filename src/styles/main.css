@@ -519,11 +519,104 @@ html, body {
   z-index: 2;
 }
 
-/* Top Left: Divine Protection Shield */
+/* Top Left: Task Progression Card & Protection Shield */
 .hud-top-left {
   display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+/* Structured Task Progression Card */
+.hud-task-card {
+  background: rgba(18, 11, 6, 0.65);
+  border: 1px solid rgba(255, 215, 0, 0.35);
+  border-radius: 12px;
+  padding: 8px 14px;
+  min-width: 220px;
+  max-width: 260px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6), inset 0 0 12px rgba(255, 215, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  transition: all 0.25s ease;
+}
+
+.hud-task-card:hover {
+  border-color: rgba(255, 215, 0, 0.6);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7), 0 0 12px rgba(255, 215, 0, 0.2);
+}
+
+.task-card-header {
+  display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: space-between;
+}
+
+.task-badge {
+  font-family: var(--font-sans);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  color: #ffd700;
+  background: rgba(255, 215, 0, 0.15);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.task-type-icon {
+  font-size: 0.85rem;
+  filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.6));
+}
+
+.task-title {
+  font-family: var(--font-serif);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #fffdf5;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+}
+
+.task-desc {
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  color: #d8c2aa;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+}
+
+.task-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 3px;
+}
+
+.task-progress-bar {
+  flex: 1;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.task-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff9800, #ffd700);
+  border-radius: 2px;
+  box-shadow: 0 0 6px rgba(255, 215, 0, 0.8);
+  transition: width 0.25s ease-out;
+}
+
+.task-progress-val {
+  font-family: var(--font-sans);
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #ffd700;
+  min-width: 48px;
+  text-align: right;
 }
 
 .hud-protection-badge {
@@ -533,6 +626,7 @@ html, body {
   gap: 3px;
   opacity: 0.45;
   transition: opacity 0.3s ease, transform 0.3s ease;
+  margin-top: 2px;
 }
 
 .hud-protection-badge.active {
@@ -584,19 +678,59 @@ html, body {
 
 .protection-label {
   font-family: var(--font-sans);
-  font-size: 0.62rem;
-  letter-spacing: 0.2em;
+  font-size: 0.58rem;
+  letter-spacing: 0.15em;
   font-weight: 700;
   color: #f7e6ce;
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
 }
 
-/* Top Center: Run Distance */
+/* Top Center: Vighnas Pips & Run Distance */
 .hud-top-center {
   display: flex;
   flex-direction: column;
   align-items: center;
   margin-top: -4px;
+}
+
+/* Vighnas Cleared 3/3 Tracker Pips */
+.hud-vighna-pips-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(18, 10, 5, 0.5);
+  border: 1px solid rgba(255, 215, 0, 0.25);
+  border-radius: 14px;
+  padding: 3px 10px;
+  margin-bottom: 4px;
+  backdrop-filter: blur(4px);
+}
+
+.vighna-pips-label {
+  font-family: var(--font-sans);
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  color: #f5b041;
+}
+
+.vighna-pips {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.vighna-pip {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.25);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  filter: grayscale(1);
+}
+
+.vighna-pip.active {
+  color: #ffd700;
+  filter: drop-shadow(0 0 6px #ff9800) drop-shadow(0 0 10px #ffd700);
+  transform: scale(1.2);
 }
 
 .hud-distance-wrap {
@@ -626,34 +760,13 @@ html, body {
   text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
 }
 
-.hud-journey-label {
-  font-family: var(--font-sans);
-  font-size: 0.65rem;
-  letter-spacing: 0.42em;
-  text-indent: 0.42em;
-  color: #e4c5a0;
-  opacity: 0.8;
-  font-weight: 600;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
-  margin-top: 2px;
-}
-
-/* Region Task Tracker removed per user request */
-.hud-region-tracker,
-#hud-region-tracker {
-  display: none !important;
-  opacity: 0 !important;
-  visibility: hidden !important;
-  pointer-events: none !important;
-}
-
 /* Temple Approach Hairline (Visible in final stretch) */
 .hud-temple-approach {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  margin-top: 8px;
+  margin-top: 6px;
   opacity: 0;
   transform: translateY(-4px);
   transition: opacity 0.4s ease, transform 0.4s ease;
@@ -690,12 +803,66 @@ html, body {
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
 }
 
-/* Top Right: Star Counter & Minimal Pause */
+/* Top Right: Timer, Score, Star Counter & Minimal Pause */
 .hud-top-right {
   pointer-events: auto;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
+}
+
+.hud-timer-wrap {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(15, 10, 5, 0.45);
+  border: 1px solid rgba(255, 215, 0, 0.25);
+  padding: 5px 10px;
+  border-radius: 18px;
+  backdrop-filter: blur(6px);
+}
+
+.hud-timer-icon {
+  font-size: 0.85rem;
+  color: #ffd700;
+}
+
+.hud-timer-val {
+  font-family: var(--font-serif);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.08em;
+  min-width: 44px;
+}
+
+.hud-score-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  background: rgba(15, 10, 5, 0.45);
+  border: 1px solid rgba(255, 215, 0, 0.25);
+  padding: 3px 10px;
+  border-radius: 12px;
+  backdrop-filter: blur(6px);
+}
+
+.hud-score-label {
+  font-family: var(--font-sans);
+  font-size: 0.52rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  color: #f5b041;
+}
+
+.hud-score-val {
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #ffd700;
+  letter-spacing: 0.05em;
+  min-width: 48px;
+  text-align: right;
 }
 
 .hud-stars-wrap {
@@ -705,7 +872,7 @@ html, body {
   gap: 6px;
   background: rgba(15, 10, 5, 0.45);
   border: 1px solid rgba(255, 215, 0, 0.25);
-  padding: 5px 14px;
+  padding: 5px 12px;
   border-radius: 20px;
   backdrop-filter: blur(6px);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
@@ -725,12 +892,12 @@ html, body {
 
 .hud-stars-val {
   font-family: var(--font-serif);
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   font-weight: 700;
   color: #fffdf5;
   letter-spacing: 0.08em;
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9);
-  min-width: 24px;
+  min-width: 20px;
   transition: transform 0.15s ease, color 0.15s ease;
 }
 
@@ -793,6 +960,123 @@ html, body {
   border-color: #ffd700;
   color: #ffd700;
   transform: scale(1.08);
+}
+
+/* Contextual [E] Interaction Prompt Button (Floating Center-Bottom) */
+.hud-interact-prompt {
+  position: absolute;
+  bottom: 50px;
+  left: 50%;
+  transform: translateX(-50%) scale(0.85);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(28, 14, 6, 0.9);
+  border: 2px solid #ffd700;
+  padding: 10px 22px;
+  border-radius: 30px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8), 0 0 24px rgba(255, 215, 0, 0.5);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  cursor: pointer;
+  z-index: 20;
+}
+
+.hud-interact-prompt.active {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+  pointer-events: auto;
+  animation: interactPulse 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes interactPulse {
+  0% { transform: translateX(-50%) scale(1); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8), 0 0 16px rgba(255, 215, 0, 0.4); }
+  100% { transform: translateX(-50%) scale(1.05); box-shadow: 0 6px 26px rgba(0, 0, 0, 0.9), 0 0 30px rgba(255, 215, 0, 0.8); }
+}
+
+.interact-key-pill {
+  background: #ffd700;
+  color: #1a0802;
+  font-family: var(--font-sans);
+  font-weight: 900;
+  font-size: 0.85rem;
+  padding: 2px 8px;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.interact-key-pill kbd {
+  font-family: inherit;
+}
+
+.interact-text {
+  font-family: var(--font-serif);
+  font-size: 0.88rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9);
+}
+
+/* Task Complete Floating Banner */
+.hud-task-complete-banner {
+  opacity: 0;
+  transform: scale(0.85) translateY(-14px);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(90deg, rgba(35, 18, 5, 0.95), rgba(60, 30, 8, 0.95));
+  border: 1px solid #ffd700;
+  padding: 8px 22px;
+  border-radius: 24px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.8), 0 0 24px rgba(255, 215, 0, 0.4);
+  transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+.hud-task-complete-banner.active {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+
+.task-comp-spark {
+  color: #ffd700;
+  font-size: 1.1rem;
+  animation: starSoftShine 1s infinite alternate;
+}
+
+.task-comp-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.task-comp-heading {
+  font-family: var(--font-sans);
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.25em;
+  color: #f5b041;
+}
+
+.task-comp-title {
+  font-family: var(--font-serif);
+  font-size: 0.88rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #ffffff;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+}
+
+.task-comp-reward {
+  font-family: var(--font-serif);
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #ffd700;
+  background: rgba(255, 215, 0, 0.15);
+  border: 1px solid rgba(255, 215, 0, 0.4);
+  padding: 2px 8px;
+  border-radius: 10px;
 }
 
 /* ===================================================================

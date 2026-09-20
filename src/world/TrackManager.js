@@ -8,6 +8,7 @@
 import * as THREE from 'three';
 import { ObstacleFactory } from '../entities/Obstacles.js';
 import { CollectibleFactory } from '../entities/Collectibles.js';
+import { InteractableFactory } from '../entities/Interactables.js';
 import { Temple } from '../entities/Temple.js';
 
 export class TrackManager {
@@ -17,6 +18,7 @@ export class TrackManager {
     this.textures = shaderMaterials.textures;
     this.obstacleFactory = new ObstacleFactory(shaderMaterials);
     this.collectibleFactory = new CollectibleFactory(shaderMaterials);
+    this.interactableFactory = new InteractableFactory(shaderMaterials);
 
     this.segmentLength = 45.0;
     this.visibleSegments = 6;
@@ -35,9 +37,39 @@ export class TrackManager {
     this.starPool = [];
     this.activeObstacles = [];
     this.activeStars = [];
+    this.interactables = [];
 
+    this.initInteractables();
     this.initPools();
     this.initTrack();
+  }
+
+  initInteractables() {
+    // 5 Fixed Sacred Landmarks along the pilgrimage path
+    // Task 2: Vighna 1 (Z = 280)
+    const vighna1 = this.interactableFactory.createVighna(1, 280);
+    this.scene.add(vighna1);
+    this.interactables.push(vighna1);
+
+    // Task 4: Festival Shrine (Z = 550)
+    const shrine1 = this.interactableFactory.createFestivalShrine('SHRINE_1', 550);
+    this.scene.add(shrine1);
+    this.interactables.push(shrine1);
+
+    // Task 6: Vighna 2 (Z = 920)
+    const vighna2 = this.interactableFactory.createVighna(2, 920);
+    this.scene.add(vighna2);
+    this.interactables.push(vighna2);
+
+    // Task 8: Temple Bell (Z = 1150)
+    const bell1 = this.interactableFactory.createTempleBell('BELL_1', 1150);
+    this.scene.add(bell1);
+    this.interactables.push(bell1);
+
+    // Task 9: Vighna 3 (Z = 1320)
+    const vighna3 = this.interactableFactory.createVighna(3, 1320);
+    this.scene.add(vighna3);
+    this.interactables.push(vighna3);
   }
 
   initPools() {
@@ -981,6 +1013,24 @@ export class TrackManager {
       }
     }
 
+    // 3. Animate Interactables (Vighnas, Shrines, Temple Bell)
+    for (let i = 0; i < this.interactables.length; i++) {
+      const obj = this.interactables[i];
+      if (obj.visible) {
+        if (obj.interactType === 'VIGHNA') {
+          if (obj.ring) obj.ring.rotation.z += delta * 1.5;
+          if (obj.omOrb) {
+            obj.omOrb.rotation.y += delta * 2.0;
+            obj.omOrb.position.y = 2.4 + Math.sin(Date.now() * 0.004) * 0.15;
+          }
+        } else if (obj.interactType === 'BELL') {
+          if (obj.bellMesh) {
+            obj.bellMesh.rotation.z = Math.sin(Date.now() * 0.003) * 0.05;
+          }
+        }
+      }
+    }
+
     // Animate sacred water flow
     if (this.textures && this.textures.water) {
       this.textures.water.offset.y -= delta * 0.25;
@@ -999,6 +1049,44 @@ export class TrackManager {
       if (distance < s.maxDist) return s;
     }
     return stages[stages.length - 1];
+  }
+
+  getNearbyInteractable(playerZ, playerX, maxRange = 18.0) {
+    for (let i = 0; i < this.interactables.length; i++) {
+      const obj = this.interactables[i];
+      if (!obj.isCleared) {
+        const dz = obj.targetZ - playerZ;
+        // In front of player within maxRange, or just passed within 3m
+        if (dz >= -3.0 && dz <= maxRange) {
+          return obj;
+        }
+      }
+    }
+    return null;
+  }
+
+  clearInteractable(interactId) {
+    for (let i = 0; i < this.interactables.length; i++) {
+      const obj = this.interactables[i];
+      if (obj.interactId === interactId || (obj.interactType === 'VIGHNA' && `VIGHNA_${obj.vighnaId}` === interactId)) {
+        obj.isCleared = true;
+        // Float and fade out clearance animation
+        let elapsed = 0;
+        const anim = () => {
+          elapsed += 0.03;
+          obj.position.y += 0.15;
+          obj.scale.multiplyScalar(0.94);
+          if (elapsed < 1.0) {
+            requestAnimationFrame(anim);
+          } else {
+            obj.visible = false;
+          }
+        };
+        requestAnimationFrame(anim);
+        return obj;
+      }
+    }
+    return null;
   }
 
   checkCollisions(player) {
@@ -1087,6 +1175,14 @@ export class TrackManager {
     });
     this.activeObstacles = [];
     this.activeCollectibles = [];
+
+    // Reset Interactables
+    this.interactables.forEach(obj => {
+      obj.isCleared = false;
+      obj.visible = true;
+      obj.scale.set(1, 1, 1);
+      obj.position.set(0, 0, obj.targetZ);
+    });
 
     // Clear old segment meshes
     for (let seg of this.segments) {

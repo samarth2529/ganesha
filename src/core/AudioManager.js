@@ -317,6 +317,26 @@ export class AudioManager {
     });
   }
 
+  // --- Sound FX: Sacred Task Completion Chime ---
+  playVictoryChime() {
+    if (!this.ctx || this.isMuted) return;
+    const t = this.ctx.currentTime;
+    const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+    notes.forEach((freq, i) => {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, t + i * 0.08);
+      gain.gain.setValueAtTime(0.35, t + i * 0.08);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + i * 0.08 + 0.5);
+
+      osc.connect(gain);
+      gain.connect(this.sfxGain);
+      osc.start(t + i * 0.08);
+      osc.stop(t + i * 0.08 + 0.5);
+    });
+  }
+
   // --- Sound FX: Obstacle Impact ---
   playImpact() {
     if (!this.ctx || this.isMuted) return;

@@ -16,6 +16,7 @@ import { InputManager } from './InputManager.js';
 import { AudioManager } from './AudioManager.js';
 import { VFXManager } from '../vfx/VFXManager.js';
 import { UIManager } from '../ui/UIManager.js';
+import { TaskManager } from './TaskManager.js';
 
 export class Game {
   constructor() {
@@ -65,6 +66,7 @@ export class Game {
     this.vfx = new VFXManager(this.scene, this.shaderMaterials);
     this.input = new InputManager(this);
     this.ui = new UIManager(this);
+    this.taskManager = new TaskManager(this);
 
     this.setupResize();
     this.cameraController.setMenuMode(true);
@@ -149,6 +151,18 @@ export class Game {
         this.audio.playSlide();
         this.vfx.spawnFootstepDust(this.player.mesh.position, true);
       }
+    } else if (action === 'INTERACT') {
+      const nearby = this.trackManager.getNearbyInteractable(this.player.mesh.position.z, this.player.currentX, 22.0);
+      if (nearby) {
+        const handled = this.taskManager.onInteract(nearby.interactId);
+        if (handled) {
+          this.trackManager.clearInteractable(nearby.interactId);
+          this.ui.showInteractPrompt(false);
+          this.ui.triggerFlash('gold');
+          this.vfx.createStarBurst(this.player.mesh.position);
+          this.audio.playVictoryChime();
+        }
+      }
     }
   }
 
@@ -169,6 +183,7 @@ export class Game {
     this.invulnerableTimer = 0;
     this.lastStageName = '';
 
+    this.taskManager.start();
     this.player.reset();
     this.mushakGuide.reset();
     this.trackManager.reset();
@@ -188,6 +203,11 @@ export class Game {
     this.distance = 1475;
     this.currentSpeed = 0;
     this.starsCollected = 108;
+
+    this.taskManager.currentTaskIndex = 9;
+    this.taskManager.tasksCompleted = 9;
+    this.taskManager.vighnasCleared = 3;
+    this.taskManager.score = 8500;
 
     this.player.reset();
     this.player.mesh.position.set(0, 0, 1475);
@@ -221,9 +241,16 @@ export class Game {
     this.player.triggerVictory();
     this.mushakGuide.triggerVictory();
 
+    this.taskManager.stopTimer();
+    const curTask = this.taskManager.getCurrentTask();
+    if (curTask && curTask.id === 'TASK_10_FINAL_JOURNEY') {
+      this.taskManager.completeTask(curTask);
+    }
+
+    const results = this.taskManager.getFinalResults();
     this.audio.transitionToTempleClimax();
     this.cameraController.startCinematicReveal(new THREE.Vector3(0, 0, 1500));
-    this.ui.show360HUD();
+    this.ui.showCinematicEnding(results);
     if (this.vfx) {
       this.vfx.setSnowIntensity(0.0);
     }
@@ -231,11 +258,12 @@ export class Game {
 
   triggerCollision() {
     this.state = 'GAMEOVER';
+    this.taskManager.stopTimer();
     this.player.triggerDeath();
     this.audio.playImpact();
     this.audio.stopMusic();
     this.ui.triggerFlash('hit');
-    this.ui.showGameOver(this.distance, this.starsCollected);
+    this.ui.showGameOver(this.distance, this.starsCollected, this.taskManager.tasksCompleted, this.taskManager.score);
     if (this.vfx) {
       this.vfx.setSnowIntensity(0.0);
     }
@@ -328,6 +356,21 @@ export class Game {
         }
       }
 
+      // Task Progression Engine Tick
+      this.taskManager.update(delta, this.distance);
+
+      // Proximity check for Active Task Interactables (Vighnas, Shrines, Bells)
+      const nearby = this.trackManager.getNearbyInteractable(this.player.mesh.position.z, this.player.currentX, 18.0);
+      const curTask = this.taskManager.getCurrentTask();
+      if (nearby && curTask && (
+        (curTask.type === 'CLEAR_VIGHNA' && nearby.interactType === 'VIGHNA' && curTask.vighnaId === nearby.vighnaId) ||
+        (curTask.type === 'INTERACT_OBJECT' && curTask.interactId === nearby.interactId)
+      )) {
+        this.ui.showInteractPrompt(true, nearby.promptText);
+      } else {
+        this.ui.showInteractPrompt(false);
+      }
+
       // Collision, Near-Misses & Pickups
       if (this.distance < 1450) {
         const collisionResult = this.trackManager.checkCollisions(this.player);
@@ -337,6 +380,7 @@ export class Game {
           this.ui.triggerNearMiss();
           this.combo++;
           this.comboTimer = 2.5;
+          this.taskManager.score += 50 * Math.max(1, this.combo);
           this.audio.playLaneShift();
         }
 
@@ -348,6 +392,7 @@ export class Game {
             this.comboTimer = 2.5;
             this.starStreak++;
 
+            this.taskManager.onStarCollected();
             this.audio.playStarPickup(this.combo);
             this.vfx.createStarBurst(col.position);
             this.ui.triggerFlash('gold');
@@ -397,7 +442,7 @@ export class Game {
         this.triggerClimaxArrival();
       }
 
-      // Update Minimal Running HUD
+      // Update Minimal Running HUD & Structured Task Progression Card
       this.ui.updateHUD(
         this.distance,
         this.starsCollected,
@@ -406,6 +451,15 @@ export class Game {
         this.combo,
         this.protectionActive,
         this.protectionPercent
+      );
+
+      const progress = this.taskManager.getProgressDisplay();
+      this.ui.updateTaskHUD(
+        curTask,
+        progress,
+        this.taskManager.vighnasCleared,
+        this.taskManager.score,
+        this.taskManager.getFormattedTime()
       );
     } else if (this.state === 'CLIMAX_CINEMATIC' || this.state === 'CLIMAX_360') {
       this.player.update(delta, 0.3);

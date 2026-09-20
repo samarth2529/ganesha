@@ -81,8 +81,25 @@
   <div id="game-hud" class="screen hud-hidden">
     <!-- Top HUD Bar -->
     <div class="hud-top-bar">
-      <!-- Top Left: Divine Protection & Blessing -->
+      <!-- Top Left: Task Progression Card & Protection -->
       <div class="hud-top-left">
+        <!-- Structured Task Progress Card -->
+        <div id="hud-task-card" class="hud-task-card">
+          <div class="task-card-header">
+            <span id="hud-task-badge" class="task-badge">TASK 1/10</span>
+            <span id="hud-task-type-icon" class="task-type-icon">🏛️</span>
+          </div>
+          <div id="hud-task-title" class="task-title">TEMPLE ENTRANCE</div>
+          <div id="hud-task-desc" class="task-desc">Explore the ancient temple entrance</div>
+          <div class="task-progress-row">
+            <div class="task-progress-bar">
+              <div id="hud-task-bar-fill" class="task-bar-fill" style="width: 0%;"></div>
+            </div>
+            <span id="hud-task-progress-val" class="task-progress-val">0m / 120m</span>
+          </div>
+        </div>
+
+        <!-- Divine Protection Badge -->
         <div id="hud-protection-badge" class="hud-protection-badge" title="Divine Protection Shield">
           <div class="protection-ring-bg">
             <svg class="protection-svg" viewBox="0 0 36 36">
@@ -95,13 +112,22 @@
         </div>
       </div>
 
-      <!-- Top Center: Run Distance & Journey Identity -->
+      <!-- Top Center: Vighnas Pips & Run Distance -->
       <div class="hud-top-center">
+        <!-- Vighnas 3/3 Tracker Pips -->
+        <div class="hud-vighna-pips-wrap" title="Vighnas Cleared">
+          <span class="vighna-pips-label">VIGHNAS</span>
+          <div class="vighna-pips">
+            <span id="vighna-pip-1" class="vighna-pip" title="Vighna 1">🔱</span>
+            <span id="vighna-pip-2" class="vighna-pip" title="Vighna 2">🔱</span>
+            <span id="vighna-pip-3" class="vighna-pip" title="Vighna 3">🔱</span>
+          </div>
+        </div>
+
         <div class="hud-distance-wrap">
           <span id="hud-distance" class="hud-distance-val">0</span>
           <span class="hud-distance-unit">m</span>
         </div>
-        <div class="hud-journey-label">SACRED PATH</div>
 
         <!-- Temple Approach Hairline Progression (Visible in final stretch) -->
         <div id="hud-temple-approach" class="hud-temple-approach">
@@ -112,8 +138,20 @@
         </div>
       </div>
 
-      <!-- Top Right: Star Counter, Floating Feedback & Minimal Pause -->
+      <!-- Top Right: Score, Timer, Star Counter & Pause -->
       <div class="hud-top-right">
+        <!-- Live Run Timer -->
+        <div class="hud-timer-wrap">
+          <span class="hud-timer-icon">⏱</span>
+          <span id="hud-timer-val" class="hud-timer-val">00:00</span>
+        </div>
+
+        <!-- Live Score Counter -->
+        <div class="hud-score-wrap">
+          <span class="hud-score-label">SCORE</span>
+          <span id="hud-score-val" class="hud-score-val">0</span>
+        </div>
+
         <!-- Minimal Star Counter -->
         <div class="hud-stars-wrap">
           <span class="hud-star-glyph">★</span>
@@ -126,8 +164,24 @@
       </div>
     </div>
 
+    <!-- Contextual [E] Interaction Prompt Button (Floating Center-Bottom) -->
+    <div id="hud-interact-prompt" class="hud-interact-prompt" title="Press E to Interact">
+      <div class="interact-key-pill"><kbd>E</kbd></div>
+      <span id="hud-interact-label" class="interact-text">CLEAR VIGHNA</span>
+    </div>
+
     <!-- Upper-Center Floating Dynamic Notifications -->
     <div class="hud-floating-notifications">
+      <!-- Task Complete Floating Banner -->
+      <div id="hud-task-complete-banner" class="hud-task-complete-banner">
+        <span class="task-comp-spark">✦</span>
+        <div class="task-comp-details">
+          <span class="task-comp-heading">TASK COMPLETE</span>
+          <span id="hud-task-complete-title" class="task-comp-title">TEMPLE ENTRANCE</span>
+        </div>
+        <span id="hud-task-complete-reward" class="task-comp-reward">+500 PTS</span>
+      </div>
+
       <!-- Divine Combo Indicator (Only visible during active combo) -->
       <div id="hud-combo-badge" class="hud-combo-badge">
         <div id="hud-combo-multiplier" class="combo-number">×2</div>
@@ -183,8 +237,16 @@
           <span class="stat-val" id="stat-dist">0m</span>
         </div>
         <div class="stat-box">
-          <span class="stat-label">DIVINE STARS COLLECTED</span>
+          <span class="stat-label">DIVINE STARS</span>
           <span class="stat-val" id="stat-stars">0</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">TASKS COMPLETED</span>
+          <span class="stat-val" id="stat-tasks">0/10</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">TOTAL SCORE</span>
+          <span class="stat-val" id="stat-score">0</span>
         </div>
       </div>
       <button id="btn-tryagain" class="btn-divine-play">
@@ -204,32 +266,43 @@
     </div>
   </div>
 
-  <!-- Climax Temple Cinematic Ending Screen -->
+  <!-- Climax Temple Cinematic Ending & Final Results Screen -->
   <div id="cinematic-ending-screen" class="screen">
     <div class="cinematic-backdrop"></div>
     <div class="cinematic-content">
       <div class="divine-symbol">॥ श्री गणेशाय नमः ॥</div>
-      <h1 class="ending-title">VIGHNAHARTA</h1>
-      <p class="ending-subtitle">THE REMOVER OF ALL OBSTACLES</p>
+      <h1 class="ending-title">VIGHNAHARTA COMPLETE</h1>
+      <p class="ending-subtitle">THE PILGRIMAGE HAS REACHED BHAGWAN GANESHA</p>
       
       <div class="blessing-message">
-        "May Lord Ganesha bestow divine wisdom, peace, prosperity, and joy upon your life."
+        "May Lord Ganesha remove all obstacles and bestow divine wisdom, peace, prosperity, and joy upon your life."
       </div>
 
+      <!-- Structured Final Results Grid -->
       <div class="final-stats-banner">
         <div class="final-stat">
-          <span class="fs-num" id="end-stat-dist">1,800m</span>
-          <span class="fs-lbl">SACRED PATH CROSSED</span>
+          <span class="fs-num" id="end-stat-score">0</span>
+          <span class="fs-lbl">FINAL SCORE</span>
+        </div>
+        <div class="final-stat-divider"></div>
+        <div class="final-stat">
+          <span class="fs-num" id="end-stat-time">00:00</span>
+          <span class="fs-lbl">TOTAL TIME</span>
         </div>
         <div class="final-stat-divider"></div>
         <div class="final-stat">
           <span class="fs-num" id="end-stat-stars">0</span>
-          <span class="fs-lbl">DIVINE STARS OFFERED</span>
+          <span class="fs-lbl">STARS COLLECTED</span>
         </div>
         <div class="final-stat-divider"></div>
         <div class="final-stat">
-          <span class="fs-num" id="end-stat-score">0</span>
-          <span class="fs-lbl">DEVOTION SCORE</span>
+          <span class="fs-num" id="end-stat-vighnas">3/3</span>
+          <span class="fs-lbl">VIGHNAS CLEARED</span>
+        </div>
+        <div class="final-stat-divider"></div>
+        <div class="final-stat">
+          <span class="fs-num" id="end-stat-tasks">10/10</span>
+          <span class="fs-lbl">TASKS COMPLETED</span>
         </div>
       </div>
 
