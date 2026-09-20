@@ -24,6 +24,17 @@ export class UIManager {
     this.hudTempleApproach = document.getElementById('hud-temple-approach');
     this.hudApproachFill = document.getElementById('hud-approach-fill');
 
+    // Multi-Region & Task Progression HUD Elements
+    this.hudRegionTracker = document.getElementById('hud-region-tracker');
+    this.hudRegionBadgeNum = document.getElementById('hud-region-badge-num');
+    this.hudRegionName = document.getElementById('hud-region-name');
+    this.hudTaskName = document.getElementById('hud-task-name');
+    this.hudTaskProgress = document.getElementById('hud-task-progress');
+    this.hudTaskBarFill = document.getElementById('hud-task-bar-fill');
+    this.hudTaskCompleteBadge = document.getElementById('hud-task-complete-badge');
+    this.hudTaskCompleteTitle = document.getElementById('hud-task-complete-title');
+    this.hudTaskCompleteDesc = document.getElementById('hud-task-complete-desc');
+
     // Dynamic Notifications
     this.hudComboBadge = document.getElementById('hud-combo-badge');
     this.hudComboMultiplier = document.getElementById('hud-combo-multiplier');
@@ -387,6 +398,69 @@ export class UIManager {
     this.vighnaTimeout = setTimeout(() => {
       if (this.hudVighnaWarning) this.hudVighnaWarning.classList.remove('active');
     }, 1200);
+  }
+
+  // Multi-Region & Task Progression HUD Controller
+  updateRegionTask(region) {
+    if (!region) return;
+
+    if (this.hudRegionBadgeNum) {
+      const regNum = region.id ? region.id.replace('_', ' ') : 'REGION';
+      this.hudRegionBadgeNum.textContent = regNum;
+    }
+
+    if (this.hudRegionName) {
+      this.hudRegionName.textContent = region.name;
+    }
+
+    if (this.hudTaskName) {
+      this.hudTaskName.textContent = region.taskName;
+    }
+
+    if (this.hudTaskProgress) {
+      if (region.isCompleted) {
+        this.hudTaskProgress.textContent = '✓ COMPLETED';
+        this.hudTaskProgress.style.color = '#7dff7d';
+      } else {
+        this.hudTaskProgress.textContent = `${region.progress} / ${region.target}`;
+        this.hudTaskProgress.style.color = '#ffd700';
+      }
+    }
+
+    if (this.hudTaskBarFill) {
+      const pct = region.isCompleted ? 100 : Math.min(100, Math.max(0, (region.progress / Math.max(1, region.target)) * 100));
+      this.hudTaskBarFill.style.width = `${pct}%`;
+      if (region.isCompleted) {
+        this.hudTaskBarFill.style.background = 'linear-gradient(90deg, #4ade80, #ffd700)';
+      } else {
+        this.hudTaskBarFill.style.background = 'linear-gradient(90deg, #ff8c00, #ffd700)';
+      }
+    }
+  }
+
+  triggerTaskComplete(region) {
+    if (!this.hudTaskCompleteBadge) return;
+    if (this.hudTaskCompleteTitle) {
+      this.hudTaskCompleteTitle.textContent = `${region.taskName} COMPLETED!`;
+    }
+    if (this.hudTaskCompleteDesc) {
+      this.hudTaskCompleteDesc.textContent = `Path cleared — Proceed to the next divine realm!`;
+    }
+
+    this.hudTaskCompleteBadge.classList.add('active');
+    this.triggerFlash('gold');
+
+    if (this.taskCompleteTimeout) clearTimeout(this.taskCompleteTimeout);
+    this.taskCompleteTimeout = setTimeout(() => {
+      if (this.hudTaskCompleteBadge) {
+        this.hudTaskCompleteBadge.classList.remove('active');
+      }
+    }, 2800);
+  }
+
+  triggerRegionEnter(region) {
+    this.triggerVighnaWarning(`ENTERING ${region.name}`);
+    this.updateRegionTask(region);
   }
 
   updateObjective(text, isComplete = false) {

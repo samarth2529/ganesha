@@ -63,14 +63,40 @@ export class TrackManager {
       this.obstaclePool.push(obs);
     }
 
-    // 2. Fixed Star Pool (30 items)
-    for (let i = 0; i < 30; i++) {
-      const star = this.collectibleFactory.createStar(0, 1.0, 0);
+    // 2. Fixed Collectible Pools (Stars, Modaks, Diyas)
+    this.starPool = [];
+    this.modakPool = [];
+    this.diyaPool = [];
+    this.activeCollectibles = [];
+
+    // Stars (24 items)
+    for (let i = 0; i < 24; i++) {
+      const star = this.collectibleFactory.createStar(0, 1.2, 0);
       star.visible = false;
       star.frustumCulled = true;
       star.isCollected = false;
       this.scene.add(star);
       this.starPool.push(star);
+    }
+
+    // Modaks for Region 1 Task (12 items)
+    for (let i = 0; i < 12; i++) {
+      const modak = this.collectibleFactory.createModak(0, 1.1, 0);
+      modak.visible = false;
+      modak.frustumCulled = true;
+      modak.isCollected = false;
+      this.scene.add(modak);
+      this.modakPool.push(modak);
+    }
+
+    // Diyas for Region 2 Task (8 items)
+    for (let i = 0; i < 8; i++) {
+      const diya = this.collectibleFactory.createDiya(0, 0.8, 0);
+      diya.visible = false;
+      diya.frustumCulled = true;
+      diya.isCollected = false;
+      this.scene.add(diya);
+      this.diyaPool.push(diya);
     }
   }
 
@@ -876,36 +902,70 @@ export class TrackManager {
     const lanes = [-3.2, 0, 3.2];
     const laneIdx = Math.floor(Math.random() * 3);
     const obstacleLane = lanes[laneIdx];
-    const starLane = lanes[(laneIdx + 1) % 3];
+    const itemLane = lanes[(laneIdx + 1) % 3];
+    const altLane = lanes[(laneIdx + 2) % 3];
 
-    // 1. Assign Obstacle from Pool
-    const obs = this.obstaclePool.find(o => !o.visible);
-    if (obs) {
-      obs.visible = true;
-      obs.nearMissChecked = false;
-      obs.hasHit = false;
-      const zOffset = 15 + Math.random() * 12;
-      const worldZ = segData.startZ + zOffset;
-      obs.position.set(obstacleLane, 0, worldZ);
-      obs.worldZ = worldZ;
-      obs.segData = segData;
-      if (!this.activeObstacles.includes(obs)) {
-        this.activeObstacles.push(obs);
+    // 1. Assign Obstacle from Pool (Strictly in Regions 1, 2, 3; Region 4 has wide open passage)
+    if (segData.startZ < 1200) {
+      const obs = this.obstaclePool.find(o => !o.visible);
+      if (obs) {
+        obs.visible = true;
+        obs.nearMissChecked = false;
+        obs.hasHit = false;
+        const zOffset = 15 + Math.random() * 12;
+        const worldZ = segData.startZ + zOffset;
+        obs.position.set(obstacleLane, 0, worldZ);
+        obs.worldZ = worldZ;
+        obs.segData = segData;
+        if (!this.activeObstacles.includes(obs)) {
+          this.activeObstacles.push(obs);
+        }
       }
     }
 
-    // 2. Assign Stars in a row (3 stars)
+    // 2. Region-Specific Interactive Task Items & Offerings
+    if (segData.startZ < 350) {
+      // Region 1: Sacred Modak Offerings
+      const modak = this.modakPool.find(m => !m.visible);
+      if (modak) {
+        modak.visible = true;
+        modak.isCollected = false;
+        const mZ = segData.startZ + 20;
+        modak.position.set(itemLane, 1.1, mZ);
+        modak.worldZ = mZ;
+        modak.segData = segData;
+        if (!this.activeCollectibles.includes(modak)) {
+          this.activeCollectibles.push(modak);
+        }
+      }
+    } else if (segData.startZ < 750) {
+      // Region 2: Sacred Brass Diyas
+      const diya = this.diyaPool.find(d => !d.visible);
+      if (diya) {
+        diya.visible = true;
+        diya.isCollected = false;
+        const dZ = segData.startZ + 22;
+        diya.position.set(itemLane, 0.8, dZ);
+        diya.worldZ = dZ;
+        diya.segData = segData;
+        if (!this.activeCollectibles.includes(diya)) {
+          this.activeCollectibles.push(diya);
+        }
+      }
+    }
+
+    // 3. Sacred Golden Stars (3 in a row along altLane)
     for (let s = 0; s < 3; s++) {
       const star = this.starPool.find(st => !st.visible);
       if (star) {
         star.visible = true;
         star.isCollected = false;
-        const sZ = segData.startZ + 12 + s * 7.5;
-        star.position.set(starLane, 1.2, sZ);
+        const sZ = segData.startZ + 10 + s * 8.0;
+        star.position.set(altLane, 1.2, sZ);
         star.worldZ = sZ;
         star.segData = segData;
-        if (!this.activeStars.includes(star)) {
-          this.activeStars.push(star);
+        if (!this.activeCollectibles.includes(star)) {
+          this.activeCollectibles.push(star);
         }
       }
     }
@@ -916,7 +976,7 @@ export class TrackManager {
     if (this.segments.length > 0) {
       const firstSeg = this.segments[0];
       if (playerZ - firstSeg.endZ > 15.0) {
-        // Recycle obstacles & stars
+        // Recycle obstacles
         this.activeObstacles = this.activeObstacles.filter(obs => {
           if (obs.segData === firstSeg) {
             obs.visible = false;
@@ -928,11 +988,12 @@ export class TrackManager {
           return true;
         });
 
-        this.activeStars = this.activeStars.filter(star => {
-          if (star.segData === firstSeg) {
-            star.visible = false;
-            star.segData = null;
-            star.isCollected = false;
+        // Recycle all collectibles (Stars, Modaks, Diyas)
+        this.activeCollectibles = this.activeCollectibles.filter(item => {
+          if (item.segData === firstSeg) {
+            item.visible = false;
+            item.segData = null;
+            item.isCollected = false;
             return false;
           }
           return true;
@@ -942,7 +1003,6 @@ export class TrackManager {
         const newStartZ = this.spawnZ;
         const newBiome = this.getBiomeForZ(newStartZ);
 
-        // If biome changed, rebuild the modular mesh cleanly
         if (firstSeg.biome !== newBiome) {
           this.scene.remove(firstSeg.mesh);
           const newMesh = this.createModularSegmentMesh(this.segments.length, newStartZ);
@@ -965,11 +1025,18 @@ export class TrackManager {
       }
     }
 
-    // 2. Animate Stars
-    for (let i = 0; i < this.activeStars.length; i++) {
-      const star = this.activeStars[i];
-      if (star.visible && !star.isCollected) {
-        star.rotation.y += delta * 2.5;
+    // 2. Animate Collectibles
+    for (let i = 0; i < this.activeCollectibles.length; i++) {
+      const item = this.activeCollectibles[i];
+      if (item.visible && !item.isCollected) {
+        if (item.itemType === 'STAR') {
+          item.rotation.y += delta * 2.5;
+        } else if (item.itemType === 'MODAK') {
+          item.rotation.y += delta * 1.8;
+          item.position.y = item.baseY + Math.sin(Date.now() * 0.004) * 0.12;
+        } else if (item.itemType === 'DIYA') {
+          item.rotation.y += delta * 1.2;
+        }
       }
     }
 
@@ -1002,40 +1069,33 @@ export class TrackManager {
     let hitObstacle = null;
     let nearMiss = false;
 
-    // Check Obstacles
+    // 1. Check Obstacles
     for (let i = 0; i < this.activeObstacles.length; i++) {
       const obs = this.activeObstacles[i];
       if (obs.visible && !obs.hasHit) {
         const dz = Math.abs(obs.worldZ - pZ);
         const dx = Math.abs(obs.position.x - pX);
 
-        // Generous, rock-solid collision envelope:
-        // Longitudinal depth window: 1.8m (obs depth ~1.5-2.2m + player depth ~1.2m)
-        // Lateral width window: 1.6m (lane width is 3.2m, player width 1.0m, obstacle width 1.8-2.6m)
         if (dz < 1.8 && dx < 1.6) {
           if (obs.actionRequired === 'JUMP') {
-            // Low Cart / Lotus Urli: Must jump over (requires player height > 0.75m)
             if (pY < 0.75) {
               hit = true;
               hitObstacle = obs;
               obs.hasHit = true;
             }
           } else if (obs.actionRequired === 'SLIDE') {
-            // High Stall Canopy: Must slide under (standing or jumping hits canopy)
             if (!player.isSliding) {
               hit = true;
               hitObstacle = obs;
               obs.hasHit = true;
             }
           } else {
-            // Solid Pillar / Barrier: Must steer/dodge away (cannot jump or slide through)
             hit = true;
             hitObstacle = obs;
             obs.hasHit = true;
           }
         }
 
-        // Near-Miss detection: Narrowly avoided in adjacent lane or tight jump/slide clearance
         if (!obs.nearMissChecked && !obs.hasHit && dz < 2.4 && dz > 0.3) {
           if (dx >= 1.6 && dx <= 2.8) {
             obs.nearMissChecked = true;
@@ -1051,19 +1111,19 @@ export class TrackManager {
       }
     }
 
-    // Check Stars
+    // 2. Check Collectibles (Stars, Modaks, Diyas)
     const collected = [];
-    for (let i = 0; i < this.activeStars.length; i++) {
-      const star = this.activeStars[i];
-      if (star.visible && !star.isCollected) {
-        const dz = Math.abs(star.worldZ - pZ);
-        if (dz < 1.4) {
-          const dx = Math.abs(star.position.x - pX);
-          const dy = Math.abs(star.position.y - (pY + 0.6));
-          if (dx < 1.4 && dy < 1.6) {
-            star.isCollected = true;
-            star.visible = false;
-            collected.push(star);
+    for (let i = 0; i < this.activeCollectibles.length; i++) {
+      const item = this.activeCollectibles[i];
+      if (item.visible && !item.isCollected) {
+        const dz = Math.abs(item.worldZ - pZ);
+        if (dz < 1.5) {
+          const dx = Math.abs(item.position.x - pX);
+          const dy = Math.abs(item.position.y - (pY + 0.8));
+          if (dx < 1.5 && dy < 1.8) {
+            item.isCollected = true;
+            item.visible = false;
+            collected.push(item);
           }
         }
       }
@@ -1079,13 +1139,13 @@ export class TrackManager {
       obs.nearMissChecked = false;
       obs.hasHit = false;
     });
-    this.activeStars.forEach(star => {
-      star.visible = false;
-      star.segData = null;
-      star.isCollected = false;
+    this.activeCollectibles.forEach(item => {
+      item.visible = false;
+      item.segData = null;
+      item.isCollected = false;
     });
     this.activeObstacles = [];
-    this.activeStars = [];
+    this.activeCollectibles = [];
 
     // Clear old segment meshes
     for (let seg of this.segments) {

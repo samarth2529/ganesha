@@ -1,11 +1,15 @@
 // ===================================================================
 // VIGHNAHARTA — MAIN GAME ENGINE (PERFORMANCE OPTIMIZED)
 // Stable 60 FPS target, single directional light, zero memory leaks.
+// Features 3D Human Player character throughout the run,
+// Multi-Region modular task progression, and Region 4 Mushak Guide.
 // ===================================================================
 
 import * as THREE from 'three';
 import { ShaderMaterials } from '../world/ShaderMaterials.js';
-import { Mushak } from '../entities/Mushak.js';
+import { Player } from '../entities/Player.js';
+import { MushakGuide } from '../entities/MushakGuide.js';
+import { RegionManager } from '../world/RegionManager.js';
 import { TrackManager } from '../world/TrackManager.js';
 import { EnvironmentManager } from '../world/EnvironmentManager.js';
 import { CameraController } from './CameraController.js';
@@ -35,16 +39,7 @@ export class Game {
     this.protectionPercent = 0.0;
     this.invulnerableTimer = 0;
 
-    // Dynamic Objectives Tracker
-    this.objectives = [
-      { text: 'COLLECT 25 STARS', check: (g) => g.starsCollected >= 25 },
-      { text: 'REACH 500m DISTANCE', check: (g) => g.distance >= 500 },
-      { text: 'ACHIEVE ×5 COMBO', check: (g) => g.combo >= 5 },
-      { text: 'REACH SACRED TEMPLE', check: (g) => g.distance >= 1500 }
-    ];
-    this.currentObjectiveIndex = 0;
     this.lastStageName = '';
-
     this.stepTimer = 0;
 
     this.shaderMaterials = new ShaderMaterials();
@@ -58,8 +53,18 @@ export class Game {
     // Subsystems
     this.audio = new AudioManager();
     this.cameraController = new CameraController(this.camera, this.canvas);
-    this.mushak = new Mushak(this.shaderMaterials);
-    this.scene.add(this.mushak.mesh);
+
+    // 1. Playable Devotee Character
+    this.player = new Player(this.shaderMaterials);
+    this.scene.add(this.player.mesh);
+
+    // 2. Region 4 Companion Mushak Guide
+    this.mushakGuide = new MushakGuide(this.shaderMaterials);
+    this.scene.add(this.mushakGuide.mesh);
+
+    // 3. Multi-Region & Task Progression System
+    this.regionManager = new RegionManager(this);
+    this.setupRegionCallbacks();
 
     this.trackManager = new TrackManager(this.scene, this.shaderMaterials);
     this.vfx = new VFXManager(this.scene, this.shaderMaterials);
@@ -69,6 +74,25 @@ export class Game {
     this.setupResize();
     this.cameraController.setMenuMode(true);
     this.animate();
+  }
+
+  setupRegionCallbacks() {
+    this.regionManager.onRegionEnter = (region) => {
+      this.ui.triggerRegionEnter(region);
+      this.audio.playLaneShift();
+    };
+
+    this.regionManager.onTaskProgress = (region) => {
+      this.ui.updateRegionTask(region);
+    };
+
+    this.regionManager.onTaskComplete = (region) => {
+      this.ui.triggerTaskComplete(region);
+      this.audio.playStarPickup(5);
+      if (this.vfx) {
+        this.vfx.createStarBurst(this.player.mesh.position);
+      }
+    };
   }
 
   initRenderer() {
@@ -132,22 +156,22 @@ export class Game {
     if (this.state !== 'PLAYING') return;
 
     if (action === 'LEFT' || action === 'RIGHT') {
-      const moved = this.mushak.changeLane(action);
+      const moved = this.player.changeLane(action);
       if (moved) {
         this.audio.playLaneShift();
-        this.vfx.spawnFootstepDust(this.mushak.mesh.position);
+        this.vfx.spawnFootstepDust(this.player.mesh.position);
       }
     } else if (action === 'JUMP') {
-      const jumped = this.mushak.jump();
+      const jumped = this.player.jump();
       if (jumped) {
         this.audio.playJump();
-        this.vfx.spawnFootstepDust(this.mushak.mesh.position);
+        this.vfx.spawnFootstepDust(this.player.mesh.position);
       }
     } else if (action === 'SLIDE') {
-      const slid = this.mushak.slide();
+      const slid = this.player.slide();
       if (slid) {
         this.audio.playSlide();
-        this.vfx.spawnFootstepDust(this.mushak.mesh.position, true);
+        this.vfx.spawnFootstepDust(this.player.mesh.position, true);
       }
     }
   }
@@ -167,10 +191,11 @@ export class Game {
     this.protectionActive = false;
     this.protectionPercent = 0.0;
     this.invulnerableTimer = 0;
-    this.currentObjectiveIndex = 0;
     this.lastStageName = '';
 
-    this.mushak.reset();
+    this.player.reset();
+    this.mushakGuide.reset();
+    this.regionManager.reset();
     this.trackManager.reset();
     this.cameraController.reset();
     this.cameraController.setMenuMode(false);
@@ -179,9 +204,7 @@ export class Game {
     }
 
     this.ui.showHUD();
-    if (this.objectives[this.currentObjectiveIndex]) {
-      this.ui.updateObjective(this.objectives[this.currentObjectiveIndex].text);
-    }
+    this.ui.updateRegionTask(this.regionManager.getCurrentRegion());
   }
 
   skipToTemple() {
@@ -192,8 +215,10 @@ export class Game {
     this.currentSpeed = 0;
     this.starsCollected = 108;
 
-    this.mushak.reset();
-    this.mushak.mesh.position.set(0, 0, 1475);
+    this.player.reset();
+    this.player.mesh.position.set(0, 0, 1475);
+    this.mushakGuide.spawnAt(0, 1475);
+
     this.trackManager.heroTemple.loadIfNeeded();
     if (this.vfx) {
       this.vfx.reset();
@@ -219,7 +244,10 @@ export class Game {
   triggerClimaxArrival() {
     this.state = 'CLIMAX_CINEMATIC';
     this.trackManager.heroTemple.loadIfNeeded();
-    this.mushak.triggerVictory();
+    this.player.triggerVictory();
+    this.mushakGuide.triggerVictory();
+    this.regionManager.addProgress('DESTINATION', 1);
+
     this.audio.transitionToTempleClimax();
     this.cameraController.startCinematicReveal(new THREE.Vector3(0, 0, 1500));
     this.ui.show360HUD();
@@ -230,7 +258,7 @@ export class Game {
 
   triggerCollision() {
     this.state = 'GAMEOVER';
-    this.mushak.triggerDeath();
+    this.player.triggerDeath();
     this.audio.playImpact();
     this.audio.stopMusic();
     this.ui.triggerFlash('hit');
@@ -259,7 +287,7 @@ export class Game {
 
       const moveZ = this.currentSpeed * delta;
       this.distance += moveZ;
-      this.mushak.mesh.position.z += moveZ;
+      this.player.mesh.position.z += moveZ;
 
       // Invulnerability tick
       if (this.invulnerableTimer > 0) {
@@ -267,31 +295,37 @@ export class Game {
       }
 
       // Update Sun Light to follow player
-      this.sunLight.position.z = this.mushak.mesh.position.z + 20;
-      this.sunLight.target.position.z = this.mushak.mesh.position.z;
+      this.sunLight.position.z = this.player.mesh.position.z + 20;
+      this.sunLight.target.position.z = this.player.mesh.position.z;
       this.sunLight.target.updateMatrixWorld();
 
-      // Update Mushak
-      this.mushak.update(delta, this.currentSpeed);
+      // Update Player Character
+      this.player.update(delta, this.currentSpeed);
+
+      // Multi-Region Engine Update
+      this.regionManager.update(this.distance);
+
+      // Region 4 (Royal Temple Approach): Spawn & update Mushak Companion Guide
+      if (this.distance >= 1200) {
+        if (!this.mushakGuide.active) {
+          this.mushakGuide.spawnAt(this.player.currentX, this.player.mesh.position.z);
+          this.ui.triggerVighnaWarning('MUSHAK JOINS AS YOUR SACRED GUIDE');
+        }
+        this.mushakGuide.update(delta, this.player, this.currentSpeed);
+      }
 
       // Footstep dust
-      if (this.mushak.isGrounded && !this.mushak.isSliding) {
+      if (this.player.isGrounded && !this.player.isSliding) {
         this.stepTimer += delta * (this.currentSpeed * 0.4);
         if (this.stepTimer > 1.0) {
           this.stepTimer = 0;
-          this.vfx.spawnFootstepDust(this.mushak.mesh.position);
+          this.vfx.spawnFootstepDust(this.player.mesh.position);
         }
       }
 
       // Update Track & Dynamic Stage Environment
-      this.trackManager.update(this.mushak.mesh.position.z, delta);
+      this.trackManager.update(this.player.mesh.position.z, delta);
       const stage = this.trackManager.getCurrentStage(this.distance);
-
-      // Stage Transition Atmospheric Warning (1s subtle banner)
-      if (this.lastStageName !== '' && this.lastStageName !== stage.name) {
-        this.ui.triggerVighnaWarning(`ENTERING ${stage.name}`);
-      }
-      this.lastStageName = stage.name;
 
       // Smooth Fog & Light Color Transition
       if (this.scene.fog) {
@@ -326,7 +360,7 @@ export class Game {
 
       // Collision, Near-Misses & Pickups
       if (this.distance < 1450) {
-        const collisionResult = this.trackManager.checkCollisions(this.mushak);
+        const collisionResult = this.trackManager.checkCollisions(this.player);
 
         // Near-Miss Dodging Event
         if (collisionResult && collisionResult.nearMiss) {
@@ -334,9 +368,11 @@ export class Game {
           this.combo++;
           this.comboTimer = 2.5;
           this.audio.playLaneShift();
+          // Region 3 Trial Progress
+          this.regionManager.addProgress('TRIAL', 1);
         }
 
-        // Star Pickups
+        // Collectibles (Stars, Modaks, Diyas)
         if (collisionResult && Array.isArray(collisionResult.collected) && collisionResult.collected.length > 0) {
           collisionResult.collected.forEach(col => {
             this.starsCollected++;
@@ -348,6 +384,11 @@ export class Game {
             this.vfx.createStarBurst(col.position);
             this.ui.triggerFlash('gold');
             this.ui.triggerStarPickup(1);
+
+            // Region Task Progress: Route by collectible type (MODAK, DIYA, STAR)
+            if (col.type) {
+              this.regionManager.addProgress(col.type, 1);
+            }
 
             // Streak formation reward: Every 10-star streak grants Divine Shield protection!
             if (this.starStreak > 0 && this.starStreak % 10 === 0) {
@@ -388,19 +429,6 @@ export class Game {
         }
       }
 
-      // Dynamic Objective Checking
-      const currentObj = this.objectives[this.currentObjectiveIndex];
-      if (currentObj && currentObj.check(this)) {
-        this.ui.updateObjective(`✓ ${currentObj.text}`, true);
-        this.currentObjectiveIndex++;
-        setTimeout(() => {
-          const nextObj = this.objectives[this.currentObjectiveIndex];
-          if (nextObj) {
-            this.ui.updateObjective(nextObj.text, false);
-          }
-        }, 2200);
-      }
-
       // Climax Arrival
       if (this.distance >= 1500) {
         this.triggerClimaxArrival();
@@ -417,18 +445,24 @@ export class Game {
         this.protectionPercent
       );
     } else if (this.state === 'CLIMAX_CINEMATIC' || this.state === 'CLIMAX_360') {
-      this.mushak.update(delta, 0.3);
-      this.trackManager.update(this.mushak.mesh.position.z, delta);
+      this.player.update(delta, 0.3);
+      if (this.mushakGuide.active) {
+        this.mushakGuide.update(delta, this.player, 0.3);
+      }
+      this.trackManager.update(this.player.mesh.position.z, delta);
     } else if (this.state === 'GAMEOVER') {
-      this.mushak.update(delta, 0);
+      this.player.update(delta, 0);
+      if (this.mushakGuide.active) {
+        this.mushakGuide.update(delta, this.player, 0);
+      }
     }
 
     // Camera & VFX & Environment
     const speedRatio = this.currentSpeed / this.baseSpeed;
-    this.cameraController.update(this.mushak, this.currentSpeed, speedRatio, delta);
-    this.vfx.update(delta, this.mushak.mesh.position, this.currentSpeed);
+    this.cameraController.update(this.player, this.currentSpeed, speedRatio, delta);
+    this.vfx.update(delta, this.player.mesh.position, this.currentSpeed);
     if (this.environment) {
-      this.environment.update(this.mushak.mesh.position.z, delta);
+      this.environment.update(this.player.mesh.position.z, delta);
     }
 
     // Render Scene (clean, direct, 60 FPS)

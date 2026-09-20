@@ -101,7 +101,23 @@
           <span id="hud-distance" class="hud-distance-val">0</span>
           <span class="hud-distance-unit">m</span>
         </div>
-        <div class="hud-journey-label">JOURNEY</div>
+        <div class="hud-journey-label">SACRED PATH</div>
+
+        <!-- Dynamic Multi-Region & Task Progression HUD -->
+        <div id="hud-region-tracker" class="hud-region-tracker">
+          <div class="region-badge-row">
+            <span id="hud-region-badge-num" class="region-num">REGION 1</span>
+            <span class="region-sep">·</span>
+            <span id="hud-region-name" class="region-title">FESTIVAL ENTRANCE</span>
+          </div>
+          <div class="region-task-row">
+            <span id="hud-task-name" class="task-name">COLLECT SACRED MODAKS</span>
+            <span id="hud-task-progress" class="task-prog">0 / 10</span>
+          </div>
+          <div class="region-task-bar-bg">
+            <div id="hud-task-bar-fill" class="region-task-bar-fill" style="width: 0%"></div>
+          </div>
+        </div>
 
         <!-- Temple Approach Hairline Progression (Visible in final stretch) -->
         <div id="hud-temple-approach" class="hud-temple-approach">
@@ -128,6 +144,13 @@
 
     <!-- Upper-Center Floating Dynamic Notifications -->
     <div class="hud-floating-notifications">
+      <!-- Region Task Complete Celebration -->
+      <div id="hud-task-complete-badge" class="hud-task-complete-badge">
+        <div class="task-om">ॐ</div>
+        <div id="hud-task-complete-title" class="task-complete-title">TASK COMPLETED!</div>
+        <div id="hud-task-complete-desc" class="task-complete-desc">Sacred offerings gathered for the deity</div>
+      </div>
+
       <!-- Divine Combo Indicator (Only visible during active combo) -->
       <div id="hud-combo-badge" class="hud-combo-badge">
         <div id="hud-combo-multiplier" class="combo-number">×2</div>
