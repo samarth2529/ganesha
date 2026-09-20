@@ -255,13 +255,13 @@ export class Mushak {
 
   changeLane(direction) {
     if (this.isDead || this.isVictory) return false;
-    if (direction === 'LEFT' && this.currentLane > -1) {
-      this.currentLane--;
-      this.targetX = this.currentLane * this.laneWidth; // Left is -X (-3.2)
-      return true;
-    } else if (direction === 'RIGHT' && this.currentLane < 1) {
+    if (direction === 'RIGHT' && this.currentLane < 1) {
       this.currentLane++;
-      this.targetX = this.currentLane * this.laneWidth; // Right is +X (+3.2)
+      this.targetX = -this.currentLane * this.laneWidth;
+      return true;
+    } else if (direction === 'LEFT' && this.currentLane > -1) {
+      this.currentLane--;
+      this.targetX = -this.currentLane * this.laneWidth;
       return true;
     }
     return false;
